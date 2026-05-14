@@ -127,10 +127,13 @@ export class BookingsService {
           },
         });
 
-        const { payment, intent } = await this.payments.createForBooking({
-          bookingId: booking.id,
-          amount: totalPrice,
-        });
+        // IMPORTANT: pass `tx` so the Payment INSERT runs on the same
+        // connection as the still-uncommitted Booking, otherwise the FK
+        // constraint Payment_bookingId_fkey fails.
+        const { payment, intent } = await this.payments.createForBooking(
+          { bookingId: booking.id, amount: totalPrice },
+          tx,
+        );
 
         return { booking, payment, clientSecret: intent.clientSecret };
       },

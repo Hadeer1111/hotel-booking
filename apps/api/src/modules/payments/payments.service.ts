@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import type { Payment } from '@prisma/client';
+import { Prisma, type Payment } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AppConfigService } from '../../config/app-config.service';
 import {
@@ -24,19 +24,32 @@ export class PaymentsService {
     @Inject(PAYMENTS_PROVIDER) private readonly provider: PaymentsProvider,
   ) {}
 
-  /** Used by the bookings module right after the booking row is inserted. */
-  async createForBooking(input: {
-    bookingId: string;
-    amount: number;
-    currency?: string;
-  }): Promise<{ payment: Payment; intent: PaymentIntentResult }> {
+  /**
+   * Used by the bookings module right after the booking row is inserted.
+   *
+   * CRITICAL: when the caller is already inside a `prisma.$transaction`,
+   * it MUST pass the transaction client (`tx`) through. The Booking row is
+   * still uncommitted at this point, so a default `this.prisma.payment.create`
+   * call would run on a different pooled connection that cannot see the
+   * booking yet, and Postgres would reject the insert with a
+   * `Payment_bookingId_fkey` foreign-key violation.
+   */
+  async createForBooking(
+    input: {
+      bookingId: string;
+      amount: number;
+      currency?: string;
+    },
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ payment: Payment; intent: PaymentIntentResult }> {
     const currency = input.currency ?? this.config.payments.currency;
     const intent = await this.provider.createIntent({
       bookingId: input.bookingId,
       amount: input.amount,
       currency,
     });
-    const payment = await this.prisma.payment.create({
+    const db = tx ?? this.prisma;
+    const payment = await db.payment.create({
       data: {
         bookingId: input.bookingId,
         provider: this.provider.name,
