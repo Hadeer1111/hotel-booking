@@ -65,7 +65,10 @@ export default function HotelDetailPage() {
       }),
     onSuccess: (created) => {
       toast({ title: 'Booking created', description: 'Redirecting to checkout…' });
-      router.push(`/bookings/${created.booking.id}`);
+      const hash = created.clientSecret
+        ? `#secret=${encodeURIComponent(created.clientSecret)}`
+        : '';
+      router.push(`/bookings/${created.booking.id}${hash}`);
     },
     onError: (err) => {
       toast({
