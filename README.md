@@ -320,7 +320,7 @@ Full request/response shapes live in
 | `/bookings`          | Card-based list (no table) with `StatusBadge`s and a friendly empty state.                                            |
 | `/bookings/[id]`     | Gradient hero summary with total + status, separated stay and payment cards, animated payment status while pending.   |
 | `/dashboard`         | Animated count-up tiles, brand-tinted icon chips, brand chart palette, `StatusBadge` in the status breakdown.         |
-| `/wishlist`          | Browser-local favourites grid powered by `useQueries`, animated empty state, "removed by owner" tile for stale ids.   |
+| `/wishlist`          | Browser-local favourites grid powered by `useQueries`. The card's existing heart doubles as the remove control, with an animated empty state and a "removed by owner" tile for ids whose hotel no longer exists. |
 
 ---
 

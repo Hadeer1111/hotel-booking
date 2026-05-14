@@ -71,22 +71,10 @@ export default function WishlistPage() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {hotels.map((row, i) =>
                 row.data ? (
-                  <div key={row.id} className="relative">
-                    <HotelCard hotel={row.data} animationDelay={i * 50} />
-                    {/* Quick-remove pill that doesn't require navigating away. */}
-                    <button
-                      type="button"
-                      aria-label={`Remove ${row.data.name} from wishlist`}
-                      onClick={() => remove(row.id)}
-                      className={cn(
-                        'absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full',
-                        'bg-white/95 text-rose-500 shadow-sm backdrop-blur transition-all duration-200',
-                        'hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      )}
-                    >
-                      <Heart className="h-4 w-4 fill-current" />
-                    </button>
-                  </div>
+                  // The card already carries a WishlistButton (top-left of
+                  // the cover) that doubles as the remove control here — a
+                  // second top-right button would be redundant.
+                  <HotelCard key={row.id} hotel={row.data} animationDelay={i * 50} />
                 ) : row.isLoading ? (
                   <HotelCardSkeleton key={row.id} />
                 ) : (
