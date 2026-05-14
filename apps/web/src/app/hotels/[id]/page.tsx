@@ -27,6 +27,7 @@ import { getHotelGradient } from '@/lib/hotel-gradient';
 import { formatCurrency, formatDate, nightsBetween, toIsoDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { WishlistButton } from '@/components/wishlist/wishlist-button';
 
 export default function HotelDetailPage() {
   const params = useParams<{ id: string }>();
@@ -129,6 +130,12 @@ export default function HotelDetailPage() {
           <div
             aria-hidden="true"
             className="absolute inset-0 bg-gradient-to-t from-slate-900/75 via-slate-900/20 to-transparent"
+          />
+          <WishlistButton
+            hotelId={hotel.id}
+            hotelName={hotel.name}
+            size="md"
+            className="absolute right-5 top-5 z-10"
           />
           <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-white animate-fade-up">
             <div className="flex flex-wrap items-center gap-2">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { QueryProvider } from '@/providers/query-provider';
 import { AuthProvider } from '@/providers/auth-provider';
+import { WishlistProvider } from '@/providers/wishlist-provider';
 import { SiteHeader } from '@/components/site-header';
 import './globals.css';
 
@@ -20,9 +21,11 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <QueryProvider>
           <AuthProvider>
-            <SiteHeader />
-            <main className="min-h-[calc(100vh-4rem)]">{children}</main>
-            <Toaster />
+            <WishlistProvider>
+              <SiteHeader />
+              <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+              <Toaster />
+            </WishlistProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

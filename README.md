@@ -62,6 +62,12 @@ inventory behind them — built as a senior-grade reference implementation.
   decorative `float`, chip activate `pop-in`, list-item `pop` on hover,
   Kenburns image zoom on hover, animated dashboard counters
   (rAF + ease-out-cubic), pulsing status badges for pending states.
+- **Wishlist** (browser-local, no API): a heart toggle lives on every card
+  and on the detail hero, the header carries a counted heart pill, and
+  `/wishlist` fetches each saved hotel in parallel via `useQueries`.
+  State syncs across tabs via the native `storage` event, SSR-safe
+  hydration avoids flicker, and unauthenticated visitors can curate a list
+  before signing up.
 
 ---
 
@@ -109,6 +115,8 @@ toward turquoise.
 | [`BrandLogo`](apps/web/src/components/brand-logo.tsx)                        | brand mark used in the site header and the auth shell               |
 | [`StatusBadge`](apps/web/src/components/status-badge.tsx)                    | brand-tinted chip for all `BookingStatus` + `PaymentStatus` values  |
 | [`AuthShell`](apps/web/src/components/auth/auth-shell.tsx)                   | two-column login/register layout with branded left panel            |
+| [`WishlistButton`](apps/web/src/components/wishlist/wishlist-button.tsx)     | heart toggle with pulse animation, used on cards and the detail hero |
+| [`WishlistLink`](apps/web/src/components/wishlist/wishlist-link.tsx)         | header heart pill with a count badge, links to `/wishlist`          |
 | [`useCountUp`](apps/web/src/hooks/use-count-up.ts)                           | rAF-driven ease-out-cubic value tween for dashboard tiles           |
 | [`useIntersectionObserver`](apps/web/src/hooks/use-intersection-observer.ts) | SSR-safe sentinel hook powering infinite scroll                     |
 | [`getHotelGradient`](apps/web/src/lib/hotel-gradient.ts)                     | deterministic duotone from hotel name (8 curated Tailwind palettes) |
@@ -304,6 +312,7 @@ Full request/response shapes live in
 | `/bookings`          | Card-based list (no table) with `StatusBadge`s and a friendly empty state.                                            |
 | `/bookings/[id]`     | Gradient hero summary with total + status, separated stay and payment cards, animated payment status while pending.   |
 | `/dashboard`         | Animated count-up tiles, brand-tinted icon chips, brand chart palette, `StatusBadge` in the status breakdown.         |
+| `/wishlist`          | Browser-local favourites grid powered by `useQueries`, animated empty state, "removed by owner" tile for stale ids.   |
 
 ---
 
@@ -334,6 +343,11 @@ Full request/response shapes live in
 - **shadcn HSL tokens for theming** so the design system can be retoned
   (different palette, dark mode) by editing `globals.css` only — every
   component reads from the same tokens.
+- **Wishlist in localStorage**, not in Postgres. It keeps the take-home
+  scope honest, lets logged-out visitors curate a list, and the provider
+  surface (`useWishlist().toggle/has/clear`) is identical to what a future
+  `/v1/wishlist` API would expose, so promoting to server-side later is a
+  drop-in change behind the same hook.
 
 ---
 

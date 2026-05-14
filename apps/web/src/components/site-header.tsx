@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand-logo';
+import { WishlistLink } from '@/components/wishlist/wishlist-link';
 import { useAuth } from '@/providers/auth-provider';
 import { cn } from '@/lib/utils';
 
@@ -67,6 +68,7 @@ export function SiteHeader() {
             );
           })}
           <span className="mx-2 hidden h-5 w-px bg-border md:inline-block" />
+          <WishlistLink />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

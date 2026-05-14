@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/format';
 import { getHotelGradient } from '@/lib/hotel-gradient';
 import { getHotelImage } from '@/lib/hotel-image';
 import { cn } from '@/lib/utils';
+import { WishlistButton } from '@/components/wishlist/wishlist-button';
 
 export interface HotelCardProps {
   hotel: Hotel;
@@ -59,6 +60,11 @@ export function HotelCard({ hotel, animationDelay, className }: HotelCardProps) 
             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
             <span className="font-medium">{hotel.stars}</span>
           </Badge>
+          <WishlistButton
+            hotelId={hotel.id}
+            hotelName={hotel.name}
+            className="absolute left-3 top-3"
+          />
           {typeof hotel.minNightlyPrice === 'number' && (
             <div
               className={cn(
