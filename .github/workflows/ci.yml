@@ -1,0 +1,78 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-typecheck-test-build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hotel_booking_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/hotel_booking_test
+      JWT_ACCESS_SECRET: ${{ '0123456789abcdef0123456789abcdef' }}
+      JWT_REFRESH_SECRET: ${{ 'abcdef0123456789abcdef0123456789' }}
+      BCRYPT_ROUNDS: 4
+      LOG_LEVEL: fatal
+      PAYMENTS_PROVIDER: mock
+      NEXT_PUBLIC_API_URL: http://localhost:4000/v1
+      NEXT_PUBLIC_PAYMENTS_PROVIDER: mock
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_xxx
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma migrate
+        run: pnpm --filter @hotel-booking/api exec prisma migrate deploy
+
+      - name: Lint
+        run: pnpm -r lint
+
+      - name: Typecheck
+        run: pnpm -r typecheck
+
+      - name: Unit tests (api)
+        run: pnpm --filter @hotel-booking/api test
+
+      - name: Unit tests (web)
+        run: pnpm --filter @hotel-booking/web test
+
+      - name: E2E (api)
+        env:
+          RUN_E2E: '1'
+        run: pnpm --filter @hotel-booking/api test:e2e
+
+      - name: Build
+        run: pnpm -r build
