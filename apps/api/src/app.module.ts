@@ -6,6 +6,7 @@ import { HotelsModule } from './modules/hotels/hotels.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthController } from './common/health/health.controller';
 
 @Module({
@@ -17,6 +18,7 @@ import { HealthController } from './common/health/health.controller';
     RoomsModule,
     PaymentsModule,
     BookingsModule,
+    DashboardModule,
   ],
   controllers: [HealthController],
   providers: [],
