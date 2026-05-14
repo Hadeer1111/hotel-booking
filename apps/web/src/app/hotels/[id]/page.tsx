@@ -117,7 +117,10 @@ export default function HotelDetailPage() {
   }
   if (!hotelQuery.data) return null;
   const hotel = hotelQuery.data;
-  const nights = nightsBetween(new Date(checkIn), new Date(checkOut));
+  // Compute nights from the DateRange itself, not from the ISO strings — when
+  // the user clicks a new "from" in the popover, react-day-picker briefly
+  // leaves `to` undefined, which would otherwise propagate NaN into the DOM.
+  const nights = range?.from && range?.to ? nightsBetween(range.from, range.to) : 0;
   const image = getHotelImage(hotel.name, 1600);
   const gradient = getHotelGradient(hotel.name);
 

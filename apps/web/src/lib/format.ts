@@ -19,5 +19,9 @@ export function toIsoDate(d: Date): string {
 
 export function nightsBetween(checkIn: Date, checkOut: Date): number {
   const ms = checkOut.getTime() - checkIn.getTime();
+  // Guard against invalid inputs (e.g. `new Date('')` → NaN time) so callers
+  // can compute eagerly while a range is being assembled without rendering
+  // NaN into the DOM.
+  if (!Number.isFinite(ms)) return 0;
   return Math.max(0, Math.round(ms / (24 * 60 * 60 * 1000)));
 }

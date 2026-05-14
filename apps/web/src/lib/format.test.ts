@@ -20,6 +20,14 @@ describe('format', () => {
     expect(nightsBetween(a, a)).toBe(0);
   });
 
+  it('nightsBetween returns 0 for invalid dates instead of NaN', () => {
+    // Reproduces the bug where an in-progress range (no checkOut yet) used
+    // to render `NaN` into the Stay tile on the hotel detail page.
+    expect(nightsBetween(new Date(''), new Date('2030-01-12'))).toBe(0);
+    expect(nightsBetween(new Date('2030-01-10'), new Date(''))).toBe(0);
+    expect(nightsBetween(new Date(''), new Date(''))).toBe(0);
+  });
+
   it('toIsoDate formats a date as YYYY-MM-DD', () => {
     expect(toIsoDate(new Date(2030, 0, 5))).toBe('2030-01-05');
     expect(toIsoDate(new Date(2030, 11, 31))).toBe('2030-12-31');
