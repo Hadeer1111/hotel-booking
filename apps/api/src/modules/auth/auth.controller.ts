@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { ZodValidationPipe } from '../../common/zod/zod-validation.pipe';
@@ -24,7 +25,10 @@ function ctxFromRequest(req: Request): { userAgent?: string; ip?: string } {
   };
 }
 
+// 10 requests / minute on every auth mutation: enough for real humans
+// but tight enough to brick credential-stuffing/refresh-replay loops.
 @Controller({ path: 'auth', version: '1' })
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 

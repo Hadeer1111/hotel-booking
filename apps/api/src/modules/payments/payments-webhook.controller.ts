@@ -7,6 +7,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { PaymentsService } from './payments.service';
 
@@ -24,6 +25,7 @@ interface RawBodyRequest extends Request {
  * signed.
  */
 @Controller({ path: 'payments', version: '1' })
+@SkipThrottle()
 export class PaymentsWebhookController {
   private readonly logger = new Logger(PaymentsWebhookController.name);
 
