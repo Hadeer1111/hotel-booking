@@ -44,10 +44,29 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  managedHotels Hotel[]   @relation("HotelManager")
+  managedHotels Hotel[]        @relation("HotelManager")
   bookings      Booking[]
+  refreshTokens RefreshToken[]
 
   @@index([role])
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  familyId     String
+  tokenHash    String    @unique
+  replacedById String?
+  revokedAt    DateTime?
+  expiresAt    DateTime
+  userAgent    String?
+  ip           String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
 }
 
 model Hotel {
