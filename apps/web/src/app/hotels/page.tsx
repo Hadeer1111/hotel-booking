@@ -1,9 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
-import { Star } from 'lucide-react';
+import { Search, SearchX, Star } from 'lucide-react';
 import { hotelsApi } from '@/lib/api/hotels';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
@@ -11,9 +10,8 @@ import { useUrlState } from '@/hooks/use-url-state';
 import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { PageHero } from '@/components/page-hero';
+import { HotelCard, HotelCardSkeleton } from '@/components/hotel-card';
 import { cn } from '@/lib/utils';
 
 const PAGE_SIZE = 12;
@@ -55,6 +53,10 @@ function HotelsList() {
   };
 
   const clearStars = () => setStarsCsv('');
+  const clearAll = () => {
+    setSearch('');
+    setStarsCsv('');
+  };
 
   const filters = useMemo(
     () => ({
@@ -91,32 +93,35 @@ function HotelsList() {
     }
   }, [isSentinelVisible, query]);
 
+  const hasActiveFilters = search.length > 0 || stars.length > 0;
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Find your stay</h1>
-        <p className="text-muted-foreground">Search hotels by name and book in seconds.</p>
-      </header>
+    <div className="container mx-auto p-4 md:p-6 space-y-8">
+      <PageHero
+        title="Find your stay"
+        subtitle="Browse hand-picked hotels and book in seconds."
+      >
+        <div className="relative">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            placeholder="Search hotels by name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search hotels"
+            className={cn(
+              'h-12 rounded-full border-0 bg-white pl-11 pr-4 text-base shadow-soft',
+              'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white/40',
+            )}
+          />
+        </div>
+      </PageHero>
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div className="flex-1">
-            <Input
-              placeholder="Search hotels by name…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Search hotels"
-            />
-          </div>
-          {query.isSuccess ? (
-            <p className="text-sm text-muted-foreground">
-              {total} hotel{total === 1 ? '' : 's'} · showing {hotels.length}
-            </p>
-          ) : null}
-        </div>
-
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter by stars">
-          <span className="text-sm text-muted-foreground mr-1">Stars</span>
+          <span className="mr-1 text-sm font-medium text-muted-foreground">Stars</span>
           {STAR_OPTIONS.map((value) => {
             const active = stars.includes(value);
             return (
@@ -127,10 +132,20 @@ function HotelsList() {
                 variant={active ? 'default' : 'outline'}
                 onClick={() => toggleStar(value)}
                 aria-pressed={active}
-                className={cn('gap-1', active && 'shadow-sm')}
+                className={cn(
+                  'gap-1.5 rounded-full transition-all duration-200',
+                  active
+                    ? 'shadow-glow bg-primary text-primary-foreground hover:bg-primary/90 animate-pop-in'
+                    : 'bg-white hover:bg-secondary hover:-translate-y-0.5',
+                )}
               >
-                {value}
-                <Star className={cn('h-3 w-3', active && 'fill-current')} />
+                <span className="font-medium">{value}</span>
+                <Star
+                  className={cn(
+                    'h-3.5 w-3.5 transition-transform',
+                    active ? 'fill-amber-300 text-amber-300 scale-110' : 'text-muted-foreground',
+                  )}
+                />
               </Button>
             );
           })}
@@ -140,51 +155,71 @@ function HotelsList() {
               size="sm"
               variant="ghost"
               onClick={clearStars}
+              className="text-muted-foreground hover:text-foreground"
               aria-label="Clear star filters"
             >
               Clear
             </Button>
           ) : null}
         </div>
+
+        {query.isSuccess ? (
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{total}</span>{' '}
+            hotel{total === 1 ? '' : 's'} · showing{' '}
+            <span className="font-semibold text-foreground">{hotels.length}</span>
+          </p>
+        ) : null}
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {query.isLoading ? (
-          Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-44" />)
+          Array.from({ length: 6 }).map((_, i) => <HotelCardSkeleton key={i} />)
         ) : hotels.length === 0 ? (
-          <p className="col-span-full rounded-lg border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-            No hotels match your search.
-          </p>
+          <EmptyState onClear={hasActiveFilters ? clearAll : undefined} />
         ) : (
-          hotels.map((hotel) => (
-            <Link key={hotel.id} href={`/hotels/${hotel.id}`} className="block group">
-              <Card className="h-full transition-colors group-hover:border-primary">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">{hotel.name}</CardTitle>
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-current" />
-                      {hotel.stars}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <p>{hotel.city}</p>
-                  <p className="line-clamp-2">{hotel.address}</p>
-                </CardContent>
-              </Card>
-            </Link>
+          hotels.map((hotel, i) => (
+            <HotelCard
+              key={hotel.id}
+              hotel={hotel}
+              // Cap the stagger so later infinite-scroll batches don't visibly cascade.
+              animationDelay={(i % PAGE_SIZE) * 30}
+            />
           ))
         )}
       </section>
 
       <div ref={sentinelRef} aria-hidden="true" className="h-1" />
 
-      <div className="flex justify-center py-4 text-sm text-muted-foreground" aria-live="polite">
+      <div className="flex justify-center pb-6 text-sm text-muted-foreground" aria-live="polite">
         {query.isFetchingNextPage ? (
-          <span>Loading more…</span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-brand-turquoise" />
+            Loading more…
+          </span>
         ) : !query.hasNextPage && hotels.length > 0 ? (
           <span>That&apos;s every hotel matching your search.</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ onClear }: { onClear?: () => void }) {
+  return (
+    <div className="col-span-full">
+      <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-2xl bg-white p-10 text-center shadow-soft">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-brand-turquoiseDeep">
+          <SearchX className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <h2 className="text-lg font-semibold">No hotels match your search</h2>
+        <p className="text-sm text-muted-foreground">
+          Try a different name or loosen the star filter.
+        </p>
+        {onClear ? (
+          <Button onClick={onClear} className="mt-2 rounded-full">
+            Clear filters
+          </Button>
         ) : null}
       </div>
     </div>
