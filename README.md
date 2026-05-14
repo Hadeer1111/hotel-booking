@@ -5,11 +5,13 @@ inventory behind them — built as a senior-grade reference implementation.
 
 > Stack: **Next.js 15 (App Router)** + **NestJS 10** + **PostgreSQL 16** +
 > **Prisma** + **TanStack Query v5** + **React Hook Form / Zod** + **shadcn/ui** +
-> **Stripe** + **pnpm workspaces**.
+> **Tailwind CSS** + **Stripe** + **pnpm workspaces**.
 
 ---
 
-## Why this repo is interesting (architecture highlights)
+## Why this repo is interesting
+
+### Backend correctness
 
 - **Booking correctness is the headline feature.** Every layer is involved:
   - The transaction runs at `SERIALIZABLE` isolation.
@@ -31,12 +33,31 @@ inventory behind them — built as a senior-grade reference implementation.
 - **Pluggable PaymentsProvider** strategy with a `MockPaymentsProvider` (HMAC
   signatures so the verify path is still exercised) and `StripePaymentsProvider`
   (test-mode keys + idempotent webhook handling).
+- **Role-aware dashboard** in a single round trip (Prisma `$transaction` +
+  one raw aggregation per panel).
+- **Multi-star filter on `/v1/hotels`** — accepts `?stars=4,5` (CSV) or the
+  repeated `?stars=4&stars=5` shape; values are coerced, deduped, clamped to
+  `[1,5]`, and rejected silently if invalid. Backed by `WHERE stars IN (…)`.
+
+### Frontend craft
+
 - **Single-flight refresh interceptor** on the web client: a burst of expired
   requests issues exactly one `/auth/refresh` and then replays in parallel.
 - **Shared `@hotel-booking/types`** workspace package — the same Zod schema
   validates `RegisterInput` on the API DTO and the React Hook Form resolver.
-- **Role-aware dashboard** in a single round trip (Prisma `$transaction` +
-  one raw aggregation per panel).
+- **Infinite scroll on /hotels** using `useInfiniteQuery` + an
+  `IntersectionObserver` sentinel; URL-synced search (`?q=`) and star filter
+  (`?stars=4,5`) make every list view bookmarkable and back-button-friendly.
+- **Tropical Joy design system** — a turquoise + sunshine + peach palette
+  applied via shadcn HSL tokens, brand-tinted shadows, an animated gradient
+  hero, deterministic per-hotel duotone gradients, Unsplash cover photos
+  hashed deterministically by hotel name, and a small library of reusable
+  primitives (`PageHero`, `HotelCard`, `StatusBadge`, `BrandLogo`,
+  `AuthShell`, `useCountUp`, `useIntersectionObserver`).
+- **Motion vocabulary**: page entrance `fade-up`, hero `gradient-shift`,
+  decorative `float`, chip activate `pop-in`, list-item `pop` on hover,
+  Kenburns image zoom on hover, animated dashboard counters
+  (rAF + ease-out-cubic), pulsing status badges for pending states.
 
 ---
 
@@ -54,11 +75,58 @@ docker-compose.yml
 
 ---
 
+## Design system
+
+The **Tropical Joy** palette is defined once as shadcn HSL custom properties
+in [`apps/web/src/app/globals.css`](apps/web/src/app/globals.css) so every
+page picks it up automatically.
+
+| Token        | Light                | Role                                                       |
+| ------------ | -------------------- | ---------------------------------------------------------- |
+| `--background` | peach-tinted ivory | page surface                                               |
+| `--primary`    | turquoise `#06B6D4` | brand CTA, focus rings, active nav                         |
+| `--accent`     | sunshine yellow    | secondary highlights                                       |
+| `--muted`      | peach-100          | quiet info panels                                          |
+| `--ring`       | turquoise          | focus visible state                                        |
+| `--radius`     | `0.875rem`         | larger than shadcn default for a friendlier feel           |
+
+Brand-named semantic tokens live in
+[`apps/web/tailwind.config.ts`](apps/web/tailwind.config.ts):
+`brand-turquoise`, `brand-turquoiseDeep`, `brand-sunshine`, `brand-peach`,
+`brand-coral`. Two custom shadows (`shadow-soft`, `shadow-glow`) are tinted
+toward turquoise.
+
+### Reusable primitives
+
+| Component                                                                    | Use                                                                 |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [`PageHero`](apps/web/src/components/page-hero.tsx)                          | animated gradient strip with floating blob decorations              |
+| [`HotelCard`](apps/web/src/components/hotel-card.tsx)                        | image cover + duotone gradient fallback, Kenburns zoom, star badge  |
+| [`BrandLogo`](apps/web/src/components/brand-logo.tsx)                        | brand mark used in the site header and the auth shell               |
+| [`StatusBadge`](apps/web/src/components/status-badge.tsx)                    | brand-tinted chip for all `BookingStatus` + `PaymentStatus` values  |
+| [`AuthShell`](apps/web/src/components/auth/auth-shell.tsx)                   | two-column login/register layout with branded left panel            |
+| [`useCountUp`](apps/web/src/hooks/use-count-up.ts)                           | rAF-driven ease-out-cubic value tween for dashboard tiles           |
+| [`useIntersectionObserver`](apps/web/src/hooks/use-intersection-observer.ts) | SSR-safe sentinel hook powering infinite scroll                     |
+| [`getHotelGradient`](apps/web/src/lib/hotel-gradient.ts)                     | deterministic duotone from hotel name (8 curated Tailwind palettes) |
+| [`getHotelImage`](apps/web/src/lib/hotel-image.ts)                           | deterministic Unsplash cover from a curated set of 16 stable photos |
+
+### Imagery
+
+Hotel cards and detail heroes pull cover photos from
+[`images.unsplash.com`](https://images.unsplash.com). The host is allowed in
+[`apps/web/next.config.mjs`](apps/web/next.config.mjs) via
+`images.remotePatterns`, and `next/image` handles resizing, format
+negotiation, and lazy loading. If a photo ever 404s, the deterministic
+gradient acts as a graceful fallback so layout is never broken.
+
+---
+
 ## Quickstart
 
 ### 1. Prerequisites
 
-- Node 20 (`.nvmrc` pinned), pnpm 10, Docker (or your own Postgres 16+).
+- Node 20 (`.nvmrc` pinned), pnpm 10, and either Docker (recommended) or your
+  own Postgres 14+.
 
 ### 2. Install dependencies
 
@@ -71,10 +139,23 @@ pnpm install
 
 ### 3. Start Postgres + provision the DB
 
+With Docker:
+
 ```bash
 docker compose up -d postgres
 pnpm --filter @hotel-booking/api prisma:migrate   # applies migrations
-pnpm --filter @hotel-booking/api prisma:seed      # seeds admin, managers, customers
+pnpm --filter @hotel-booking/api prisma:seed      # seeds users + 80 hotels
+```
+
+Without Docker (Homebrew Postgres works fine — 14+ supports `btree_gist` and
+`tstzrange`):
+
+```bash
+brew services start postgresql@16   # or @14
+psql -d postgres -c "CREATE ROLE postgres LOGIN SUPERUSER PASSWORD 'postgres';"
+psql -d postgres -c "CREATE DATABASE hotel_booking OWNER postgres;"
+pnpm --filter @hotel-booking/api prisma:migrate
+pnpm --filter @hotel-booking/api prisma:seed
 ```
 
 ### 4. Configure env
@@ -94,15 +175,29 @@ pnpm --filter @hotel-booking/api dev       # http://localhost:4000 (Swagger: /do
 pnpm --filter @hotel-booking/web dev       # http://localhost:3000
 ```
 
+### Seed dataset
+
+The seed script is **idempotent** and produces:
+
+- 1 admin, 2 managers, 3 customers (all with the same password `Password123!`)
+- **80 hotels** (4 named + 76 deterministically generated) spread across 16
+  cities and all 5 star bands, so the infinite-scroll list and the multi-star
+  filter have meaningful data
+- 3 room types per hotel × 2–3 physical rooms per type
+- 1 confirmed booking + paid payment on the first customer (only created once)
+
 ### Seed accounts
 
-After `prisma:seed`:
+After `prisma:seed` (password for **all** accounts is `Password123!`):
 
-| Role     | Email                     | Password       |
-| -------- | ------------------------- | -------------- |
-| ADMIN    | `admin@hotel-booking.dev` | `Admin123!`    |
-| MANAGER  | `manager1@hotel-booking.dev` | `Manager123!` |
-| CUSTOMER | `customer1@hotel-booking.dev` | `Customer123!` |
+| Role     | Email                          |
+| -------- | ------------------------------ |
+| ADMIN    | `admin@hotelbooking.dev`       |
+| MANAGER  | `manager1@hotelbooking.dev`    |
+| MANAGER  | `manager2@hotelbooking.dev`    |
+| CUSTOMER | `carol@example.com`            |
+| CUSTOMER | `chad@example.com`             |
+| CUSTOMER | `casey@example.com`            |
 
 ---
 
@@ -164,32 +259,47 @@ After `prisma:seed`:
 
 ## API surface (v1)
 
-| Method | Path                                            | Auth                | Notes                                  |
-| ------ | ----------------------------------------------- | ------------------- | -------------------------------------- |
-| POST   | `/v1/auth/register`                             | public              | email + password + name                |
-| POST   | `/v1/auth/login`                                | public              | issues access + refresh tokens         |
-| POST   | `/v1/auth/refresh`                              | refresh token       | rotates with reuse detection           |
-| POST   | `/v1/auth/logout`                               | refresh token       | revokes a single token                 |
-| GET    | `/v1/auth/me`                                   | access token        | returns the AuthUser                   |
-| GET    | `/v1/hotels`                                    | public              | paginated, `q=` search, `city=`        |
-| GET    | `/v1/hotels/:id`                                | public              | hotel detail                           |
-| POST   | `/v1/hotels`                                    | ADMIN               | create                                 |
-| PATCH  | `/v1/hotels/:id`                                | ADMIN or owning MANAGER | update                              |
-| DELETE | `/v1/hotels/:id`                                | ADMIN               | delete                                 |
-| GET    | `/v1/hotels/:id/room-types`                     | public              | list room types                        |
-| POST   | `/v1/hotels/:id/room-types`                     | ADMIN / MANAGER     | create category                        |
-| GET    | `/v1/hotels/:id/rooms`                          | public              | list physical rooms                    |
-| POST   | `/v1/hotels/:id/rooms`                          | ADMIN / MANAGER     | add a room                             |
-| GET    | `/v1/hotels/:id/availability?checkIn=&checkOut=` | public              | per-room-type availability             |
-| POST   | `/v1/bookings`                                  | CUSTOMER / ADMIN    | transactional booking creation         |
-| GET    | `/v1/bookings`                                  | any role            | role-scoped list                       |
-| GET    | `/v1/bookings/:id`                              | owner / manager / admin | booking detail                     |
-| PATCH  | `/v1/bookings/:id/status`                       | role-aware          | PENDING→CONFIRMED, *→CANCELLED         |
-| POST   | `/v1/payments/webhook`                          | provider signature  | idempotent via PaymentEvent.id        |
-| GET    | `/v1/dashboard/stats`                           | any role            | role-aware aggregated tiles + 12-mo chart |
-| GET    | `/docs`                                         | public              | Swagger / OpenAPI                      |
+| Method | Path                                                | Auth                    | Notes                                                            |
+| ------ | --------------------------------------------------- | ----------------------- | ---------------------------------------------------------------- |
+| POST   | `/v1/auth/register`                                 | public                  | email + password + name + optional role                          |
+| POST   | `/v1/auth/login`                                    | public                  | issues access + refresh tokens                                   |
+| POST   | `/v1/auth/refresh`                                  | refresh token           | rotates with reuse detection (burns the family on replay)        |
+| POST   | `/v1/auth/logout`                                   | refresh token           | revokes a single token                                           |
+| GET    | `/v1/auth/me`                                       | access token            | returns the AuthUser                                             |
+| GET    | `/v1/hotels`                                        | public                  | paginated, `q=` search, `city=`, **`stars=4,5`** multi-filter    |
+| GET    | `/v1/hotels/:id`                                    | public                  | hotel detail                                                     |
+| POST   | `/v1/hotels`                                        | ADMIN                   | create                                                           |
+| PATCH  | `/v1/hotels/:id`                                    | ADMIN or owning MANAGER | update                                                           |
+| DELETE | `/v1/hotels/:id`                                    | ADMIN                   | delete                                                           |
+| GET    | `/v1/hotels/:id/room-types`                         | public                  | list room types                                                  |
+| POST   | `/v1/hotels/:id/room-types`                         | ADMIN / MANAGER         | create category                                                  |
+| GET    | `/v1/hotels/:id/rooms`                              | public                  | list physical rooms                                              |
+| POST   | `/v1/hotels/:id/rooms`                              | ADMIN / MANAGER         | add a room                                                       |
+| GET    | `/v1/hotels/:id/availability?checkIn=&checkOut=`    | public                  | per-room-type availability                                       |
+| POST   | `/v1/bookings`                                      | CUSTOMER / ADMIN        | transactional booking creation                                   |
+| GET    | `/v1/bookings`                                      | any role                | role-scoped list                                                 |
+| GET    | `/v1/bookings/:id`                                  | owner / manager / admin | booking detail                                                   |
+| PATCH  | `/v1/bookings/:id/status`                           | role-aware              | PENDING→CONFIRMED, *→CANCELLED                                   |
+| POST   | `/v1/payments/webhook`                              | provider signature      | idempotent via `PaymentEvent.id`                                 |
+| GET    | `/v1/dashboard/stats`                               | any role                | role-aware aggregated tiles + 12-mo chart                        |
+| GET    | `/docs`                                             | public                  | Swagger / OpenAPI                                                |
 
-Full request/response shapes live in `packages/types/src/index.ts`.
+Full request/response shapes live in
+[`packages/types/src/index.ts`](packages/types/src/index.ts).
+
+---
+
+## Page tour (web)
+
+| Route                | Highlights                                                                                                            |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `/`                  | Animated gradient hero with floating blobs, gradient headline, three feature cards with tilt-on-hover icons.          |
+| `/hotels`            | `PageHero` with embedded search pill, multi-star chip filter (URL-synced), infinite-scroll grid of `HotelCard`s.      |
+| `/hotels/[id]`       | Full-bleed Unsplash cover hero with name overlay, animated date picker, room cards with pulsing availability dots.    |
+| `/login`, `/register`| Split `AuthShell` layout — animated branded panel on the left, rounded-xl form with branded submit on the right.      |
+| `/bookings`          | Card-based list (no table) with `StatusBadge`s and a friendly empty state.                                            |
+| `/bookings/[id]`     | Gradient hero summary with total + status, separated stay and payment cards, animated payment status while pending.   |
+| `/dashboard`         | Animated count-up tiles, brand-tinted icon chips, brand chart palette, `StatusBadge` in the status breakdown.         |
 
 ---
 
@@ -210,23 +320,34 @@ Full request/response shapes live in `packages/types/src/index.ts`.
 - **RFC 7807 problem-details** because shipping arbitrary error JSON gets
   parsed differently by every client. Standardising the envelope means
   `ApiError.problem.code === 'NO_AVAILABILITY'` always works.
+- **CSV for the `stars` filter** rather than repeated query params — the
+  shorter `?stars=4,5` is easier to bookmark, easier for humans to type, and
+  the Zod transform accepts both shapes so client choice is preserved.
+- **Deterministic gradients + curated Unsplash photos** instead of an image
+  upload pipeline. Hashes hotel name → stable image, gives every hotel a
+  visual identity for free, and keeps a graceful fallback when the photo is
+  unavailable. Trading flexibility for a zero-asset, zero-management pipeline.
+- **shadcn HSL tokens for theming** so the design system can be retoned
+  (different palette, dark mode) by editing `globals.css` only — every
+  component reads from the same tokens.
 
 ---
 
 ## Testing
 
 ```bash
-pnpm -r typecheck            # workspace-wide tsc --noEmit
-pnpm -r lint                 # workspace-wide eslint
-pnpm --filter @hotel-booking/api test         # Jest unit tests (no DB)
-pnpm --filter @hotel-booking/api test:e2e     # Supertest e2e (DB required)
-pnpm --filter @hotel-booking/web test         # Vitest unit tests
-pnpm --filter @hotel-booking/web test:e2e     # Playwright (RUN_PLAYWRIGHT=1)
+pnpm -r typecheck                                # workspace-wide tsc --noEmit
+pnpm -r lint                                     # workspace-wide eslint
+pnpm --filter @hotel-booking/api test            # Jest unit tests (no DB)
+pnpm --filter @hotel-booking/api test:e2e        # Supertest e2e (DB required)
+pnpm --filter @hotel-booking/web test            # Vitest unit tests
+pnpm --filter @hotel-booking/web test:e2e        # Playwright (RUN_PLAYWRIGHT=1)
 ```
 
-The headline concurrency test is `apps/api/test/bookings.concurrency.e2e-spec.ts`.
+The headline concurrency test is
+[`apps/api/test/bookings.concurrency.e2e-spec.ts`](apps/api/test/bookings.concurrency.e2e-spec.ts).
 It runs against a real Postgres and asserts that 8 parallel bookings on the
-last available room produce exactly one 201 and seven 409 NO_AVAILABILITY
+last available room produce exactly one 201 and seven 409 `NO_AVAILABILITY`
 responses.
 
 ---
@@ -242,7 +363,7 @@ GitHub Actions runs on every push and PR:
 5. API e2e (with `RUN_E2E=1`)
 6. Workspace-wide `build`
 
-See `.github/workflows/ci.yml`.
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
@@ -250,11 +371,13 @@ See `.github/workflows/ci.yml`.
 
 - API horizontal scale: stateless, Postgres is the only stateful dependency.
 - Logs are JSON via `nestjs-pino`. Pipe `pino-pretty` only in dev.
-- Helmet + CORS allowlist + rate limiting via `@nestjs/throttler` (10/min on
-  `/auth/*`).
-- `helmet` enabled globally.
+- `helmet` + CORS allowlist + rate limiting via `@nestjs/throttler` (default
+  20 req / 60s, applied globally and tightened on `/auth/*`).
 - Web is a stock Next 15 build — deploy on Vercel; the API runs anywhere with
   Postgres + Node 20.
+- For production imagery, swap the curated Unsplash list for a CDN you own
+  (S3 + CloudFront, Cloudflare R2, etc.) and update `next.config.mjs`
+  `remotePatterns` accordingly.
 
 ---
 
@@ -265,3 +388,4 @@ See `.github/workflows/ci.yml`.
 - File uploads for hotel photos (S3 presigned).
 - Multi-currency price tables per hotel.
 - Calendar UI for the manager surface.
+- Dark-mode toggle in the header (tokens already support it).
