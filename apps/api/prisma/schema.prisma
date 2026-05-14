@@ -1,0 +1,86 @@
+// Hotel booking system — Prisma schema.
+// See README "Design decisions" for why Room is modelled as a physical unit
+// and availability is derived from overlapping bookings.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  CUSTOMER
+}
+
+enum HotelStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  managedHotels Hotel[] @relation("HotelManager")
+
+  @@index([role])
+}
+
+model Hotel {
+  id        String      @id @default(uuid())
+  name      String
+  city      String
+  address   String
+  stars     Int
+  status    HotelStatus @default(ACTIVE)
+  managerId String?
+  manager   User?       @relation("HotelManager", fields: [managerId], references: [id], onDelete: SetNull)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  roomTypes RoomType[]
+
+  @@index([city])
+  @@index([name])
+  @@index([managerId])
+  @@index([status])
+}
+
+model RoomType {
+  id                 String   @id @default(uuid())
+  hotelId            String
+  hotel              Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  name               String
+  description        String?
+  capacity           Int
+  basePricePerNight  Decimal  @db.Decimal(10, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  rooms Room[]
+
+  @@unique([hotelId, name])
+  @@index([hotelId])
+}
+
+model Room {
+  id         String   @id @default(uuid())
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  roomNumber String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([roomTypeId, roomNumber])
+  @@index([roomTypeId])
+}
