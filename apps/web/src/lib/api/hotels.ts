@@ -7,11 +7,13 @@ import type {
 } from '@hotel-booking/types';
 import { api } from './client';
 
-export interface HotelsListParams extends Record<string, string | number | undefined> {
+export interface HotelsListParams {
   page?: number;
   limit?: number;
   q?: string;
   city?: string;
+  /** Multi-select star ratings; serialised as a CSV (`?stars=4,5`). */
+  stars?: number[];
 }
 
 export const hotelsApi = {
@@ -39,10 +41,15 @@ export const hotelsApi = {
   },
 };
 
-function buildQuery(params: Record<string, string | number | undefined>): string {
+function buildQuery(params: HotelsListParams): string {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null || v === '') continue;
+    if (Array.isArray(v)) {
+      if (v.length === 0) continue;
+      sp.set(k, v.join(','));
+      continue;
+    }
     sp.set(k, String(v));
   }
   const s = sp.toString();
