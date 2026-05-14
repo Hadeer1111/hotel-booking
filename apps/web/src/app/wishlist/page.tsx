@@ -122,8 +122,8 @@ function EmptyState() {
         'animate-fade-up',
       )}
     >
-      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-rose-50">
-        <Heart className="h-7 w-7 text-rose-500" />
+      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-950/40">
+        <Heart className="h-7 w-7 text-rose-500 dark:text-rose-400" />
       </span>
       <div className="space-y-1">
         <h2 className="text-xl font-semibold">No favourites yet</h2>

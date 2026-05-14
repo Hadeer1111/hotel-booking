@@ -26,7 +26,7 @@ export function WishlistLink() {
         'relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         active
-          ? 'bg-rose-50 text-rose-500'
+          ? 'bg-rose-50 text-rose-500 dark:bg-rose-950/40 dark:text-rose-400'
           : 'text-muted-foreground hover:bg-secondary hover:text-rose-500',
       )}
     >

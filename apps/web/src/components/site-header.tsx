@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand-logo';
 import { WishlistLink } from '@/components/wishlist/wishlist-link';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/providers/auth-provider';
 import { cn } from '@/lib/utils';
 
@@ -68,6 +69,7 @@ export function SiteHeader() {
             );
           })}
           <span className="mx-2 hidden h-5 w-px bg-border md:inline-block" />
+          <ThemeToggle />
           <WishlistLink />
           {user ? (
             <DropdownMenu>
@@ -76,7 +78,7 @@ export function SiteHeader() {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    'gap-2 rounded-full border-brand-turquoise/30 bg-white px-3',
+                    'gap-2 rounded-full border-brand-turquoise/30 bg-card px-3',
                     'hover:bg-secondary hover:border-brand-turquoise/50 hover:-translate-y-0.5',
                     'transition-all duration-200',
                   )}

@@ -112,7 +112,7 @@ function HotelsList() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search hotels"
             className={cn(
-              'h-12 rounded-full border-0 bg-white pl-11 pr-4 text-base shadow-soft',
+              'h-12 rounded-full border-0 bg-card pl-11 pr-4 text-base shadow-soft',
               'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white/40',
             )}
           />
@@ -136,7 +136,7 @@ function HotelsList() {
                   'gap-1.5 rounded-full transition-all duration-200',
                   active
                     ? 'shadow-glow bg-primary text-primary-foreground hover:bg-primary/90 animate-pop-in'
-                    : 'bg-white hover:bg-secondary hover:-translate-y-0.5',
+                    : 'bg-card hover:bg-secondary hover:-translate-y-0.5',
                 )}
               >
                 <span className="font-medium">{value}</span>
@@ -208,7 +208,7 @@ function HotelsList() {
 function EmptyState({ onClear }: { onClear?: () => void }) {
   return (
     <div className="col-span-full">
-      <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-2xl bg-white p-10 text-center shadow-soft">
+      <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-2xl bg-card p-10 text-center shadow-soft">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-brand-turquoiseDeep">
           <SearchX className="h-6 w-6" aria-hidden="true" />
         </div>
