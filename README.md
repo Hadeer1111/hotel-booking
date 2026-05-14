@@ -38,6 +38,10 @@ inventory behind them — built as a senior-grade reference implementation.
 - **Multi-star filter on `/v1/hotels`** — accepts `?stars=4,5` (CSV) or the
   repeated `?stars=4&stars=5` shape; values are coerced, deduped, clamped to
   `[1,5]`, and rejected silently if invalid. Backed by `WHERE stars IN (…)`.
+- **`minNightlyPrice` enrichment** on `GET /v1/hotels` — one bounded
+  `groupBy` aggregation joins each page of hotels with the cheapest published
+  room-type rate, so list cards can render *"from $X / night"* without an
+  N+1. `null` when the hotel has no room types yet.
 
 ### Frontend craft
 
@@ -266,7 +270,7 @@ After `prisma:seed` (password for **all** accounts is `Password123!`):
 | POST   | `/v1/auth/refresh`                                  | refresh token           | rotates with reuse detection (burns the family on replay)        |
 | POST   | `/v1/auth/logout`                                   | refresh token           | revokes a single token                                           |
 | GET    | `/v1/auth/me`                                       | access token            | returns the AuthUser                                             |
-| GET    | `/v1/hotels`                                        | public                  | paginated, `q=` search, `city=`, **`stars=4,5`** multi-filter    |
+| GET    | `/v1/hotels`                                        | public                  | paginated, `q=` search, `city=`, **`stars=4,5`** multi-filter, items carry `minNightlyPrice` |
 | GET    | `/v1/hotels/:id`                                    | public                  | hotel detail                                                     |
 | POST   | `/v1/hotels`                                        | ADMIN                   | create                                                           |
 | PATCH  | `/v1/hotels/:id`                                    | ADMIN or owning MANAGER | update                                                           |
@@ -294,7 +298,7 @@ Full request/response shapes live in
 | Route                | Highlights                                                                                                            |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `/`                  | Animated gradient hero with floating blobs, gradient headline, three feature cards with tilt-on-hover icons.          |
-| `/hotels`            | `PageHero` with embedded search pill, multi-star chip filter (URL-synced), infinite-scroll grid of `HotelCard`s.      |
+| `/hotels`            | `PageHero` with embedded search pill, multi-star chip filter (URL-synced), infinite-scroll grid of `HotelCard`s. Each card now shows a "from $X / night" pill served by the API. |
 | `/hotels/[id]`       | Full-bleed Unsplash cover hero with name overlay, animated date picker, room cards with pulsing availability dots.    |
 | `/login`, `/register`| Split `AuthShell` layout — animated branded panel on the left, rounded-xl form with branded submit on the right.      |
 | `/bookings`          | Card-based list (no table) with `StatusBadge`s and a friendly empty state.                                            |

@@ -60,6 +60,12 @@ export interface Hotel {
   managerId: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Cheapest published nightly rate across all room types of the hotel.
+   * Populated by `GET /v1/hotels` so list views can show "from $X / night"
+   * without an N+1 fetch. `null` means the hotel has no room types yet.
+   */
+  minNightlyPrice?: number | null;
 }
 
 export interface RoomType {

@@ -6,6 +6,7 @@ import type { Hotel } from '@hotel-booking/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency } from '@/lib/format';
 import { getHotelGradient } from '@/lib/hotel-gradient';
 import { getHotelImage } from '@/lib/hotel-image';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,20 @@ export function HotelCard({ hotel, animationDelay, className }: HotelCardProps) 
             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
             <span className="font-medium">{hotel.stars}</span>
           </Badge>
+          {typeof hotel.minNightlyPrice === 'number' && (
+            <div
+              className={cn(
+                'absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-slate-900',
+                'shadow-sm backdrop-blur transition-transform duration-300 group-hover:scale-105',
+              )}
+            >
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">from</span>{' '}
+              <span className="font-semibold text-brand-turquoiseDeep">
+                {formatCurrency(hotel.minNightlyPrice)}
+              </span>
+              <span className="text-xs text-muted-foreground"> / night</span>
+            </div>
+          )}
         </div>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg leading-tight transition-colors group-hover:text-brand-turquoiseDeep">

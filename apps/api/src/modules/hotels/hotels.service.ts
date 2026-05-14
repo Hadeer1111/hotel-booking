@@ -18,7 +18,9 @@ import type {
 export class HotelsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(query: InstanceType<typeof ListHotelsDto>): Promise<Paginated<Hotel>> {
+  async list(
+    query: InstanceType<typeof ListHotelsDto>,
+  ): Promise<Paginated<Hotel & { minNightlyPrice: number | null }>> {
     const where: Prisma.HotelWhereInput = {};
     if (query.q) where.name = { contains: query.q, mode: 'insensitive' };
     if (query.city) where.city = { equals: query.city, mode: 'insensitive' };
@@ -37,7 +39,28 @@ export class HotelsService {
       this.prisma.hotel.count({ where }),
     ]);
 
-    return toPaginated(data, total, query);
+    // Enrich the page with the cheapest published nightly rate per hotel so
+    // the UI can render "from $X / night" without an N+1 round trip. One
+    // grouped aggregation regardless of page size; bounded by `take`.
+    const ids = data.map((h) => h.id);
+    const minByHotel = new Map<string, number | null>();
+    if (ids.length > 0) {
+      const grouped = await this.prisma.roomType.groupBy({
+        by: ['hotelId'],
+        where: { hotelId: { in: ids } },
+        _min: { basePricePerNight: true },
+      });
+      for (const row of grouped) {
+        const raw = row._min.basePricePerNight;
+        minByHotel.set(row.hotelId, raw == null ? null : Number(raw));
+      }
+    }
+    const enriched = data.map((h) => ({
+      ...h,
+      minNightlyPrice: minByHotel.get(h.id) ?? null,
+    }));
+
+    return toPaginated(enriched, total, query);
   }
 
   async findOne(id: string): Promise<Hotel> {
