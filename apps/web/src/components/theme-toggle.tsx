@@ -1,36 +1,29 @@
 'use client';
 
 import * as React from 'react';
-import { Laptop, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
-const ORDER = ['light', 'dark', 'system'] as const;
-type ThemeChoice = (typeof ORDER)[number];
-
 /**
- * Three-state cycle button: light → dark → system → light. We mirror the
- * `next-themes` choices instead of a two-state toggle so users keep their
- * OS-driven preference without a settings page.
+ * Two-state toggle between light and dark. The provider still defaults to
+ * `system` so first-time visitors get their OS preference, but the toggle
+ * always flips to an explicit choice — there's no third "system" stop in
+ * the click cycle (the icon would have been ambiguous).
  *
+ * Icon shown is the *current* resolved mode: sun in light, moon in dark.
  * Hydration: `next-themes` resolves the theme on the client only. We gate
- * the visible state on a `mounted` flag so the first paint matches the
- * server output (a neutral sun icon).
+ * the visible icon on a `mounted` flag so the first paint matches SSR.
  */
 export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  const current: ThemeChoice = mounted && ORDER.includes(theme as ThemeChoice)
-    ? (theme as ThemeChoice)
-    : 'system';
-
-  const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
-
-  const Icon = current === 'light' ? Sun : current === 'dark' ? Moon : Laptop;
+  const isDark = mounted && resolvedTheme === 'dark';
+  const next = isDark ? 'light' : 'dark';
   const label = mounted
-    ? `Theme: ${current}. Click to switch to ${next}.`
+    ? `Switch to ${next} mode`
     : 'Toggle theme';
 
   return (
@@ -46,11 +39,11 @@ export function ThemeToggle({ className }: { className?: string }) {
         className,
       )}
     >
-      <Icon
-        // Remount when the resolved theme changes so the swap animates.
-        key={current}
-        className="h-4 w-4 animate-pop-in"
-      />
+      {isDark ? (
+        <Moon key="moon" className="h-4 w-4 animate-pop-in" />
+      ) : (
+        <Sun key="sun" className="h-4 w-4 animate-pop-in" />
+      )}
     </button>
   );
 }

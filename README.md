@@ -93,9 +93,11 @@ The **Tropical Joy** palette is defined once as shadcn HSL custom properties
 in [`apps/web/src/app/globals.css`](apps/web/src/app/globals.css) so every
 page picks it up automatically. A dark counterpart lives under `.dark` and is
 toggled by [`next-themes`](https://github.com/pacocoursey/next-themes) — the
-`ThemeToggle` in the header cycles **system → light → dark**, persists the
-choice in `localStorage`, and flips the html class without animating through
-an intermediate state.
+provider still defaults to `system` so first-time visitors get their OS
+preference, while the `ThemeToggle` in the header flips between **light and
+dark** explicitly (sun ↔ moon, no third "system" stop in the cycle),
+persists the choice in `localStorage`, and swaps the html class without
+animating through an intermediate state.
 
 | Token        | Light                | Role                                                       |
 | ------------ | -------------------- | ---------------------------------------------------------- |
@@ -123,7 +125,7 @@ toward turquoise.
 | [`AuthShell`](apps/web/src/components/auth/auth-shell.tsx)                   | two-column login/register layout with branded left panel            |
 | [`WishlistButton`](apps/web/src/components/wishlist/wishlist-button.tsx)     | heart toggle with pulse animation, used on cards and the detail hero |
 | [`WishlistLink`](apps/web/src/components/wishlist/wishlist-link.tsx)         | header heart pill with a count badge, links to `/wishlist`          |
-| [`ThemeToggle`](apps/web/src/components/theme-toggle.tsx)                    | sun / moon / laptop cycle button driving `next-themes`              |
+| [`ThemeToggle`](apps/web/src/components/theme-toggle.tsx)                    | two-state light ↔ dark toggle (sun / moon) driving `next-themes`    |
 | [`Calendar`](apps/web/src/components/ui/calendar.tsx) + [`Popover`](apps/web/src/components/ui/popover.tsx) | shadcn primitives over `react-day-picker`, used by the hotel detail range picker |
 | [`useCountUp`](apps/web/src/hooks/use-count-up.ts)                           | rAF-driven ease-out-cubic value tween for dashboard tiles           |
 | [`useIntersectionObserver`](apps/web/src/hooks/use-intersection-observer.ts) | SSR-safe sentinel hook powering infinite scroll                     |
