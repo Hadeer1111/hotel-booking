@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { BookingWithPayment } from '@hotel-booking/types';
@@ -18,9 +19,11 @@ import { StripeCheckout } from '@/components/payments/stripe-checkout';
 
 export default function BookingDetailPage() {
   return (
-    <RouteGuard>
-      <Inner />
-    </RouteGuard>
+    <Suspense fallback={null}>
+      <RouteGuard>
+        <Inner />
+      </RouteGuard>
+    </Suspense>
   );
 }
 

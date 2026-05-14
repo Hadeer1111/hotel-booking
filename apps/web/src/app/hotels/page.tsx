@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Star } from 'lucide-react';
 import { hotelsApi } from '@/lib/api/hotels';
@@ -23,6 +23,14 @@ function parseStr(raw: string | null): string {
 }
 
 export default function HotelsPage() {
+  return (
+    <Suspense fallback={null}>
+      <HotelsList />
+    </Suspense>
+  );
+}
+
+function HotelsList() {
   const [page, setPage] = useUrlState('page', parseInt1);
   const [qParam, setQParam] = useUrlState('q', parseStr);
 
