@@ -124,6 +124,7 @@ toward turquoise.
 | [`WishlistButton`](apps/web/src/components/wishlist/wishlist-button.tsx)     | heart toggle with pulse animation, used on cards and the detail hero |
 | [`WishlistLink`](apps/web/src/components/wishlist/wishlist-link.tsx)         | header heart pill with a count badge, links to `/wishlist`          |
 | [`ThemeToggle`](apps/web/src/components/theme-toggle.tsx)                    | sun / moon / laptop cycle button driving `next-themes`              |
+| [`Calendar`](apps/web/src/components/ui/calendar.tsx) + [`Popover`](apps/web/src/components/ui/popover.tsx) | shadcn primitives over `react-day-picker`, used by the hotel detail range picker |
 | [`useCountUp`](apps/web/src/hooks/use-count-up.ts)                           | rAF-driven ease-out-cubic value tween for dashboard tiles           |
 | [`useIntersectionObserver`](apps/web/src/hooks/use-intersection-observer.ts) | SSR-safe sentinel hook powering infinite scroll                     |
 | [`getHotelGradient`](apps/web/src/lib/hotel-gradient.ts)                     | deterministic duotone from hotel name (8 curated Tailwind palettes) |
@@ -314,7 +315,7 @@ Full request/response shapes live in
 | -------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `/`                  | Animated gradient hero with floating blobs, gradient headline, three feature cards with tilt-on-hover icons.          |
 | `/hotels`            | `PageHero` with embedded search pill, multi-star chip filter (URL-synced), infinite-scroll grid of `HotelCard`s. Each card now shows a "from $X / night" pill served by the API. |
-| `/hotels/[id]`       | Full-bleed Unsplash cover hero with name overlay, animated date picker, room cards with pulsing availability dots.    |
+| `/hotels/[id]`       | Full-bleed Unsplash cover hero with name overlay, **branded two-month range calendar in a popover**, +/- guest stepper, room cards with pulsing availability dots. |
 | `/login`, `/register`| Split `AuthShell` layout — animated branded panel on the left, rounded-xl form with branded submit on the right.      |
 | `/bookings`          | Card-based list (no table) with `StatusBadge`s and a friendly empty state.                                            |
 | `/bookings/[id]`     | Gradient hero summary with total + status, separated stay and payment cards, animated payment status while pending.   |
