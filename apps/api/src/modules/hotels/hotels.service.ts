@@ -23,6 +23,7 @@ export class HotelsService {
     if (query.q) where.name = { contains: query.q, mode: 'insensitive' };
     if (query.city) where.city = { equals: query.city, mode: 'insensitive' };
     if (query.status) where.status = query.status;
+    if (query.stars && query.stars.length > 0) where.stars = { in: query.stars };
 
     const { skip, take } = toSkipTake(query);
 
