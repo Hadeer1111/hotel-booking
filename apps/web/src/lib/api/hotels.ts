@@ -54,6 +54,11 @@ export const hotelsApi = {
   rooms(hotelId: string): Promise<Room[]> {
     return api.get<Room[]>(`/hotels/${hotelId}/rooms`);
   },
+  /** Flat task-style listing: `GET /v1/rooms?hotelId=…` (same rows as nested route). */
+  roomsByHotelFlat(hotelId: string): Promise<Room[]> {
+    const sp = new URLSearchParams({ hotelId }).toString();
+    return api.get<Room[]>(`/rooms?${sp}`);
+  },
   availability(
     hotelId: string,
     range: { checkIn: string; checkOut: string },

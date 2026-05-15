@@ -19,10 +19,8 @@ services:
 
   api:
     profiles: ["full"]
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-      target: development
+    image: node:20-bookworm-slim
+    working_dir: /app
     container_name: hotel-booking-api
     restart: unless-stopped
     depends_on:
@@ -45,17 +43,21 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ./apps/api:/app/apps/api
-      - ./packages:/app/packages
-      - /app/node_modules
-    command: ["pnpm", "--filter", "@hotel-booking/api", "dev"]
+      - .:/app
+    command:
+      - bash
+      - -lc
+      - |
+        set -e
+        corepack enable
+        corepack prepare pnpm@10.10.0 --activate
+        pnpm install --frozen-lockfile
+        pnpm --filter @hotel-booking/api dev
 
   web:
     profiles: ["full"]
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-      target: development
+    image: node:20-bookworm-slim
+    working_dir: /app
     container_name: hotel-booking-web
     restart: unless-stopped
     depends_on:
@@ -67,10 +69,16 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./apps/web:/app/apps/web
-      - ./packages:/app/packages
-      - /app/node_modules
-    command: ["pnpm", "--filter", "@hotel-booking/web", "dev"]
+      - .:/app
+    command:
+      - bash
+      - -lc
+      - |
+        set -e
+        corepack enable
+        corepack prepare pnpm@10.10.0 --activate
+        pnpm install --frozen-lockfile
+        pnpm --filter @hotel-booking/web exec next dev --port 3000 --hostname 0.0.0.0
 
 volumes:
   postgres_data:

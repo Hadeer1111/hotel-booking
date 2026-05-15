@@ -31,6 +31,7 @@ function authedNavItems(role: string | undefined): readonly AuthedNavItem[] {
   const base: AuthedNavItem[] = [
     { href: '/hotels', label: 'Hotels' },
     { href: '/dashboard', label: 'Dashboard' },
+    { href: '/bookings/new', label: 'Book a stay' },
     { href: '/bookings', label: 'Bookings' },
   ];
   if (role === 'ADMIN') {

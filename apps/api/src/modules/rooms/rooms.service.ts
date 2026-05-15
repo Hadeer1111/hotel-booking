@@ -94,6 +94,33 @@ export class RoomsService {
     return this.prisma.room.update({ where: { id: roomId }, data: dto });
   }
 
+  /**
+   * Task-style `PATCH /rooms/:roomId` — resolves hotel from the physical room row.
+   */
+  async updateRoomByRoomId(
+    roomId: string,
+    dto: InstanceType<typeof UpdateRoomDto>,
+    actor: AuthUser,
+  ): Promise<Room> {
+    const found = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: { roomType: { select: { hotelId: true } } },
+    });
+    if (!found) throw new NotFoundException(`room ${roomId} not found`);
+    return this.updateRoom(found.roomType.hotelId, roomId, dto, actor);
+  }
+
+  /**
+   * Task-style `POST /rooms` with `hotelId` in the JSON body.
+   */
+  async createRoomFromFlatBody(
+    dto: { hotelId: string; roomTypeId: string; roomNumber: string },
+    actor: AuthUser,
+  ): Promise<Room> {
+    const { hotelId, roomTypeId, roomNumber } = dto;
+    return this.createRoom(hotelId, { roomTypeId, roomNumber }, actor);
+  }
+
   // ---- Date-aware availability ------------------------------------------------------------
 
   /**

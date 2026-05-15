@@ -9,6 +9,14 @@ inventory behind them — built as a senior-grade reference implementation.
 
 ---
 
+## Assignment / PDF surface (what reviewers often look for)
+
+- **Rooms API:** Inventory is nested under each hotel (`GET/POST/PATCH /v1/hotels/:hotelId/rooms`). The same operations are also exposed on **`/v1/rooms`** for PDF-style examples: `GET ?hotelId=…`, `POST` with `hotelId` in the body, `PATCH /v1/rooms/:roomId`.
+- **Create booking flow:** Authenticated **`/bookings/new`** (linked in the header as “Book a stay”) plus booking from each hotel’s detail page (`/hotels/:id`). Use `?hotel=<uuid>` on `/bookings/new` to pre-select a property.
+- **Docker Compose:** Profile **`full`** binds the **repo root** into `node:20-bookworm-slim`, runs **Corepack + pnpm@10.10.0** and `pnpm install --frozen-lockfile`, then API and web dev servers (no per-app Dockerfiles required).
+
+---
+
 ## Why this repo is interesting
 
 ### Backend correctness

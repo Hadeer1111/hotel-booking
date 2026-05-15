@@ -114,12 +114,20 @@ function EmptyState() {
       <p className="text-sm text-muted-foreground">
         Find a hotel you love and your reservations will land here.
       </p>
-      <Link
-        href="/hotels"
-        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5"
-      >
-        Browse hotels <ArrowRight className="h-4 w-4" />
-      </Link>
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        <Link
+          href="/bookings/new"
+          className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5"
+        >
+          Book a stay <ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link
+          href="/hotels"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium shadow-soft transition-transform hover:-translate-y-0.5"
+        >
+          Browse hotels <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
     </div>
   );
 }
