@@ -11,7 +11,7 @@ const explicitPublic = process.env.NEXT_PUBLIC_API_URL;
 // the literal "/api-backend/v1" unless NEXT_PUBLIC_API_URL is set (see top-of-file note).
 const apiUrl =
   explicitPublic ??
-  (process.env.NODE_ENV === 'production' ? '/api-backend/v1' : 'http://localhost:4000/v1');
+  (process.env.NODE_ENV === 'production' ? '/v1' : 'http://localhost:4000/v1');
 
 const paymentsProvider =
   (process.env.NEXT_PUBLIC_PAYMENTS_PROVIDER as 'mock' | 'stripe' | undefined) ?? 'mock';
