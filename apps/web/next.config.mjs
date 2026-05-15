@@ -25,7 +25,7 @@ const nextConfig = {
     if (!apiBackendOrigin) return [];
     return [
       {
-        source: '/api-backend/:path*',
+        source: '/v1/:path*',
         destination: `${apiBackendOrigin}/:path*`,
       },
     ];
