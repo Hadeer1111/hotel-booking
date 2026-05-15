@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Bar,
@@ -40,6 +41,18 @@ import type { BookingStatus } from '@hotel-booking/types';
 const CHART_PRIMARY = '#06B6D4';
 const CHART_SECONDARY = '#F59E0B';
 
+function formatMonthTick(isoMonth: string): string {
+  const parts = isoMonth.split('-');
+  const y = Number(parts[0]);
+  const mo = Number(parts[1]);
+  if (!Number.isFinite(y) || !Number.isFinite(mo)) return isoMonth;
+  try {
+    return new Date(y, mo - 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+  } catch {
+    return isoMonth;
+  }
+}
+
 export default function DashboardPage() {
   return (
     <RouteGuard>
@@ -54,6 +67,17 @@ function Inner() {
     queryKey: queryKeys.dashboard.stats(),
     queryFn: () => api.get<DashboardStats>('/dashboard/stats'),
   });
+
+  /** Coerce finite numbers — NaN breaks Recharts band math for `<Bar>` (SVG `x`). */
+  const chartData = useMemo(() => {
+    const rows = query.data?.revenueByMonth;
+    if (!rows?.length) return [];
+    return rows.map((row) => ({
+      month: row.month,
+      bookings: Number.isFinite(Number(row.bookings)) ? Number(row.bookings) : 0,
+      revenue: Number.isFinite(Number(row.revenue)) ? Number(row.revenue) : 0,
+    }));
+  }, [query.data]);
 
   if (query.isLoading) {
     return (
@@ -90,7 +114,7 @@ function Inner() {
         <Link
           href={staffManageHref}
           className={cn(
-            'group relative flex overflow-hidden rounded-2xl border p-6 shadow-soft transition-all',
+            'group relative flex overflow-hidden rounded-xl border p-4 shadow-soft transition-all sm:rounded-2xl sm:p-6',
             'hover:-translate-y-0.5 hover:shadow-md',
             isHotelAdmin
               ? 'border-amber-200/80 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-900/40 dark:from-amber-950/30 dark:to-orange-950/20'
@@ -193,11 +217,11 @@ function Inner() {
               {isCustomer ? 'Your booking activity (12 mo)' : 'Bookings & revenue (12 mo)'}
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-80">
+          <CardContent className="h-72 min-h-[220px] sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
-                data={stats.revenueByMonth}
-                margin={{ top: 10, right: 16, bottom: 0, left: 0 }}
+                data={chartData}
+                margin={{ top: 10, right: 14, bottom: 20, left: 4 }}
               >
                 <defs>
                   <linearGradient id="bookingsGradient" x1="0" y1="0" x2="0" y2="1">
@@ -206,9 +230,16 @@ function Inner() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 11 }}
+                  tickMargin={10}
+                  tickFormatter={(v: string | number): string =>
+                    typeof v === 'string' ? formatMonthTick(v) : formatMonthTick(String(v))
+                  }
+                />
+                <YAxis yAxisId="left" tick={{ fontSize: 11 }} width={40} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} width={52} />
                 <Tooltip
                   cursor={{ fill: 'rgba(6, 182, 212, 0.08)' }}
                   contentStyle={{
@@ -220,12 +251,14 @@ function Inner() {
                     if (name === 'revenue') return formatCurrency(Number(value));
                     return String(value);
                   }}
+                  labelFormatter={(label) => formatMonthTick(String(label))}
                 />
                 <Bar
                   yAxisId="left"
                   dataKey="bookings"
                   fill="url(#bookingsGradient)"
                   radius={[6, 6, 0, 0]}
+                  maxBarSize={48}
                 />
                 <Line
                   yAxisId="right"
@@ -306,7 +339,7 @@ function Tile({ label, value, icon: Icon, tone, format = 'integer', delay }: Til
       <CardContent className="flex items-start justify-between gap-3 p-5">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-3xl font-bold tracking-tight tabular-nums">{display}</p>
+          <p className="text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">{display}</p>
         </div>
         <div
           className={cn(

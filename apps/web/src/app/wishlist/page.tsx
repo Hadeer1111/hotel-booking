@@ -39,13 +39,13 @@ export default function WishlistPage() {
   const someLoading = queries.some((q) => q.isLoading);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
+    <div className="min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)]">
       <PageHero
         title="Hotels you love"
         subtitle="Tap the heart on any hotel to save it for later — your list lives on this device and syncs across tabs."
       >
         {hydrated && count > 0 ? (
-          <div className="flex items-center gap-3 text-sm text-slate-900">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-900 sm:gap-3">
             <span className="rounded-full bg-white/70 px-3 py-1 font-medium shadow-sm backdrop-blur">
               {count} saved
             </span>

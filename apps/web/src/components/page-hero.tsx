@@ -24,7 +24,7 @@ export function PageHero({
     <section
       {...rest}
       className={cn(
-        'relative overflow-hidden rounded-2xl shadow-soft',
+        'relative overflow-hidden rounded-xl shadow-soft sm:rounded-2xl',
         // 200% background size makes the gradient-shift keyframe visibly pan.
         'bg-gradient-to-br from-cyan-400 via-cyan-300 to-amber-200',
         'bg-[length:200%_200%] animate-gradient-shift',
@@ -44,8 +44,8 @@ export function PageHero({
         className="absolute -top-12 -left-8 h-40 w-40 rounded-full bg-amber-200/30 blur-3xl animate-float"
         style={{ animationDelay: '2s' }}
       />
-      <div className="relative p-6 md:p-10 animate-fade-up">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+      <div className="relative p-5 animate-fade-up sm:p-6 md:p-10">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
           {title}
         </h1>
         {subtitle ? (

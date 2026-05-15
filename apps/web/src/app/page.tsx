@@ -38,7 +38,7 @@ export default function HomePage(): React.ReactElement {
             <Sparkles className="h-3.5 w-3.5" /> Tropical Joy is here
           </span>
           <h1
-            className="max-w-3xl text-4xl font-semibold tracking-tight text-slate-900 md:text-6xl animate-fade-up"
+            className="max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 animate-fade-up sm:text-4xl md:text-6xl"
             style={{ animationDelay: '60ms' }}
           >
             Book hotels with confidence.
@@ -82,7 +82,7 @@ export default function HomePage(): React.ReactElement {
         </div>
       </section>
 
-      <section className="mt-12 grid gap-5 md:grid-cols-3">
+      <section className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 md:grid-cols-3 sm:gap-5">
         <FeatureCard
           delay={0}
           icon={CalendarHeart}

@@ -213,24 +213,26 @@ function Inner() {
           {typesQuery.isLoading ? (
             <Skeleton className="h-24 w-full" />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Capacity</TableHead>
-                  <TableHead>Price / night</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(typesQuery.data ?? []).map((rt) => (
-                  <TableRow key={rt.id}>
-                    <TableCell className="font-medium">{rt.name}</TableCell>
-                    <TableCell>{rt.capacity}</TableCell>
-                    <TableCell>{formatCurrency(Number(rt.basePricePerNight))}</TableCell>
+            <div className="-mx-3 max-w-full overflow-x-auto px-3 sm:mx-0 sm:px-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Capacity</TableHead>
+                    <TableHead>Price / night</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {(typesQuery.data ?? []).map((rt) => (
+                    <TableRow key={rt.id}>
+                      <TableCell className="font-medium">{rt.name}</TableCell>
+                      <TableCell>{rt.capacity}</TableCell>
+                      <TableCell>{formatCurrency(Number(rt.basePricePerNight))}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -249,25 +251,27 @@ function Inner() {
           {roomsQuery.isLoading ? (
             <Skeleton className="h-24 w-full" />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Room number</TableHead>
-                  <TableHead>Room type</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(roomsQuery.data ?? []).map((r) => {
-                  const type = (typesQuery.data ?? []).find((t) => t.id === r.roomTypeId);
-                  return (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.roomNumber}</TableCell>
-                      <TableCell>{type?.name ?? '—'}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="-mx-3 max-w-full overflow-x-auto px-3 sm:mx-0 sm:px-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Room number</TableHead>
+                    <TableHead>Room type</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(roomsQuery.data ?? []).map((r) => {
+                    const type = (typesQuery.data ?? []).find((t) => t.id === r.roomTypeId);
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium">{r.roomNumber}</TableCell>
+                        <TableCell>{type?.name ?? '—'}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

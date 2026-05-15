@@ -34,7 +34,7 @@ export function StaffPageHero({
     <section
       {...rest}
       className={cn(
-        'relative overflow-hidden rounded-2xl border shadow-soft transition-colors',
+        'relative overflow-hidden rounded-xl border shadow-soft transition-colors sm:rounded-2xl',
         staffRole === 'ADMIN'
           ? 'border-amber-200/80 dark:border-amber-900/40'
           : 'border-teal-200/80 dark:border-teal-900/40',
@@ -51,7 +51,7 @@ export function StaffPageHero({
         aria-hidden="true"
         className="absolute -bottom-12 left-10 h-32 w-32 rounded-full bg-white/25 blur-2xl"
       />
-      <div className="relative p-6 md:p-10 animate-fade-up">
+      <div className="relative p-4 animate-fade-up sm:p-6 md:p-10">
         <div className="flex flex-wrap items-center gap-3">
           <span
             className={cn(
@@ -65,7 +65,7 @@ export function StaffPageHero({
             {staffRole === 'ADMIN' ? 'Administrator' : 'Property manager'}
           </span>
         </div>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl dark:text-slate-900">
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-900 sm:text-3xl md:text-4xl">
           {title}
         </h1>
         {subtitle ? (

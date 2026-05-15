@@ -74,8 +74,8 @@ function BookingRow({ booking, index }: { booking: BookingWithPayment; index: nu
           'group-hover:-translate-y-0.5 group-hover:shadow-lg',
         )}
       >
-        <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1.5">
+        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={booking.status} />
               {booking.payment ? <StatusBadge status={booking.payment.status} /> : null}
@@ -89,14 +89,14 @@ function BookingRow({ booking, index }: { booking: BookingWithPayment; index: nu
             </p>
             <p className="text-xs font-mono text-muted-foreground">{booking.id}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
+          <div className="flex w-full shrink-0 items-center justify-between gap-3 pt-1 sm:w-auto sm:justify-end sm:pt-0">
+            <div className="text-left sm:text-right">
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-lg font-semibold tracking-tight">
                 {formatCurrency(Number(booking.totalPrice))}
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-brand-turquoiseDeep" />
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-brand-turquoiseDeep" />
           </div>
         </CardContent>
       </Card>

@@ -32,6 +32,7 @@ import { getHotelGradient } from '@/lib/hotel-gradient';
 import { formatCurrency, formatDate, nightsBetween, toIsoDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 
 export default function HotelDetailPage() {
@@ -40,6 +41,8 @@ export default function HotelDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
+  /** Twin-month calendar overflows narrow viewports — keep one pane below `md`. */
+  const twinMonthCalendar = useMediaQuery('(min-width: 768px)');
 
   const today = useMemo(() => {
     const d = new Date();
@@ -159,7 +162,7 @@ export default function HotelDetailPage() {
 
       {/* Hero with cover image + name overlay */}
       <section className={cn('relative overflow-hidden rounded-3xl shadow-soft bg-gradient-to-br', gradient)}>
-        <div className="relative h-72 md:h-96">
+        <div className="relative min-h-[14rem] h-52 sm:h-72 md:h-96">
           <Image
             src={image.src}
             alt={`${hotel.name} cover image`}
@@ -191,12 +194,12 @@ export default function HotelDetailPage() {
                 {hotel.status}
               </Badge>
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-5xl">
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl md:text-5xl">
               {hotel.name}
             </h1>
-            <p className="mt-2 flex items-center gap-2 text-white/85">
-              <MapPin className="h-4 w-4" />
-              {hotel.city} · {hotel.address}
+            <p className="mt-2 flex items-start gap-2 text-sm text-white/85 sm:text-base md:items-center">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 md:mt-0" aria-hidden />
+              <span className="break-words">{hotel.city} · {hotel.address}</span>
             </p>
           </div>
         </div>
@@ -244,14 +247,10 @@ export default function HotelDetailPage() {
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent
-                align="start"
-                className="w-auto p-0"
-                // Stacked single-month on small screens, twin month on md+.
-              >
+              <PopoverContent align="center" className="w-auto max-w-[calc(100vw-1.25rem)] p-0 md:align-start">
                 <Calendar
                   mode="range"
-                  numberOfMonths={2}
+                  numberOfMonths={twinMonthCalendar ? 2 : 1}
                   defaultMonth={range?.from ?? today}
                   selected={range}
                   onSelect={setRange}

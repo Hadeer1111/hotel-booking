@@ -70,6 +70,23 @@ inventory behind them — built as a senior-grade reference implementation.
   State syncs across tabs via the native `storage` event, SSR-safe
   hydration avoids flicker, and unauthenticated visitors can curate a list
   before signing up.
+- **Responsive layout:** `overflow-x-hidden` on the document body prevents
+  accidental horizontal scroll from wide charts or calendars. The global
+  Tailwind `container` increases horizontal padding from `sm` → `lg`.
+  **Navigation** collapses into a touch-friendly menu (hamburger) below the
+  `md` breakpoint while primary links stay pill-styled on tablets and up.
+  Heroes (`PageHero`, `StaffPageHero`) use tighter radii and typography on
+  small screens. The **hotel detail** date picker renders one calendar month on
+  narrow viewports and two from `md` up. **Dashboard** charts use stable margins,
+  short month ticks, and fixed Y-axis widths so dual scales remain legible on
+  phones. Staff **room
+  inventory** tables sit in horizontal scroll regions on small breakpoints.
+  **Auth** shells and booking cards use stacked→row flex patterns with full-width
+  primary actions where appropriate.
+  Convenience hook:
+  [`apps/web/src/hooks/use-media-query.ts`](apps/web/src/hooks/use-media-query.ts)
+  (client-side `matchMedia`) powers the hotel-detail calendar pane count (one month
+  on narrow viewports, two from `md` up).
 
 ---
 

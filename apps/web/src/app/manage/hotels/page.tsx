@@ -62,8 +62,8 @@ function Inner() {
         }
       >
         {isAdmin ? (
-          <Link href="/manage/hotels/new">
-            <Button className="gap-2 rounded-full shadow-soft hover:-translate-y-0.5 transition-transform">
+          <Link href="/manage/hotels/new" className="block w-full sm:inline-block sm:w-auto">
+            <Button className="w-full gap-2 rounded-full shadow-soft hover:-translate-y-0.5 transition-transform sm:w-auto">
               <Plus className="h-4 w-4" />
               Add hotel
             </Button>

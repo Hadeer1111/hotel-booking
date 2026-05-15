@@ -40,7 +40,7 @@ export function BrandLogo({ href = '/', compact = false, className }: BrandLogoP
       {compact ? null : (
         <span
           className={cn(
-            'text-lg font-semibold tracking-tight',
+            'hidden text-lg font-semibold tracking-tight sm:inline',
             'bg-gradient-to-r from-brand-turquoiseDeep via-brand-turquoise to-amber-500',
             'bg-clip-text text-transparent',
             'transition-[background-position] duration-500',

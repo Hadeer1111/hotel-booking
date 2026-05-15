@@ -25,7 +25,7 @@ export default function RootLayout({
             <AuthProvider>
               <WishlistProvider>
                 <SiteHeader />
-                <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+                <main className="min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)]">{children}</main>
                 <Toaster />
               </WishlistProvider>
             </AuthProvider>

@@ -70,7 +70,7 @@ export function AuthShell({ children, tagline, blurb }: AuthShellProps) {
           </div>
         </aside>
 
-        <main className="relative flex items-center justify-center bg-card p-6 md:p-10">
+        <main className="relative flex items-center justify-center bg-card px-5 py-8 sm:p-8 md:p-10">
           <div className="w-full max-w-md animate-fade-up">{children}</div>
         </main>
       </div>

@@ -208,7 +208,10 @@ function shapeMonthly(
   const byMonth = new Map(
     rows.map((r) => [
       monthKey(r.month),
-      { bookings: Number(r.bookings), revenue: Number(r.revenue ?? '0') },
+      {
+        bookings: finiteNum(Number(r.bookings)),
+        revenue: finiteNum(Number(r.revenue ?? '0')),
+      },
     ]),
   );
   const result: { month: string; bookings: number; revenue: number }[] = [];
@@ -216,10 +219,18 @@ function shapeMonthly(
   for (let i = 0; i < 12; i += 1) {
     const key = monthKey(cursor);
     const bucket = byMonth.get(key) ?? { bookings: 0, revenue: 0 };
-    result.push({ month: key, ...bucket });
+    result.push({
+      month: key,
+      bookings: finiteNum(bucket.bookings),
+      revenue: finiteNum(bucket.revenue),
+    });
     cursor.setMonth(cursor.getMonth() + 1);
   }
   return result;
+}
+
+function finiteNum(n: number): number {
+  return Number.isFinite(n) ? n : 0;
 }
 
 function monthKey(d: Date): string {
