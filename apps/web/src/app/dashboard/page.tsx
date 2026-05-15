@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   Bar,
@@ -12,10 +13,13 @@ import {
   YAxis,
 } from 'recharts';
 import {
+  ArrowRight,
   BedDouble,
   Building2,
   CalendarCheck,
   DollarSign,
+  Shield,
+  Trees,
   TrendingUp,
 } from 'lucide-react';
 import type { DashboardStats } from '@hotel-booking/types';
@@ -67,6 +71,9 @@ function Inner() {
   if (!query.data) return null;
   const stats = query.data;
   const isCustomer = stats.scope === 'customer';
+  const isHotelAdmin = user?.role === 'ADMIN';
+  const isManager = user?.role === 'MANAGER';
+  const staffManageHref = '/manage/hotels';
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
@@ -78,6 +85,60 @@ function Inner() {
             : `Welcome back, ${user?.name}. Here's how things are looking.`
         }
       />
+
+      {isHotelAdmin || isManager ? (
+        <Link
+          href={staffManageHref}
+          className={cn(
+            'group relative flex overflow-hidden rounded-2xl border p-6 shadow-soft transition-all',
+            'hover:-translate-y-0.5 hover:shadow-md',
+            isHotelAdmin
+              ? 'border-amber-200/80 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-900/40 dark:from-amber-950/30 dark:to-orange-950/20'
+              : 'border-teal-200/80 bg-gradient-to-br from-teal-50 to-emerald-50 dark:border-teal-900/40 dark:from-teal-950/30 dark:to-emerald-950/20',
+          )}
+        >
+          <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'inline-flex h-9 w-9 items-center justify-center rounded-xl shadow-sm',
+                    isHotelAdmin
+                      ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-100'
+                      : 'bg-teal-100 text-teal-900 dark:bg-teal-500/20 dark:text-teal-100',
+                  )}
+                >
+                  {isHotelAdmin ? (
+                    <Shield className="h-5 w-5" aria-hidden />
+                  ) : (
+                    <Trees className="h-5 w-5" aria-hidden />
+                  )}
+                </span>
+                <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {isHotelAdmin ? 'Administrator' : 'Property manager'}
+                </p>
+              </div>
+              <p className="text-lg font-semibold tracking-tight">
+                {isHotelAdmin ? 'Open hotel catalogue control' : 'Manage your assigned venues'}
+              </p>
+              <p className="max-w-xl text-sm text-muted-foreground">
+                {isHotelAdmin
+                  ? 'Create venues, delegate managers, prune listings across the marketplace.'
+                  : 'Review availability, tweak storefront copy for your portfolio, maintain room plans.'}
+              </p>
+            </div>
+            <span
+              className={cn(
+                'mt-4 inline-flex items-center gap-1 text-sm font-medium sm:mt-0',
+                isHotelAdmin ? 'text-amber-900 dark:text-amber-200' : 'text-teal-900 dark:text-teal-200',
+              )}
+            >
+              Continue
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </div>
+        </Link>
+      ) : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {!isCustomer ? (

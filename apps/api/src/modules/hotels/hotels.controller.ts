@@ -9,8 +9,10 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { Role } from '@prisma/client';
 import { HotelsService } from './hotels.service';
 import { ZodValidationPipe } from '../../common/zod/zod-validation.pipe';
@@ -20,6 +22,7 @@ import {
   UpdateHotelDto,
 } from './dto/hotel.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -29,15 +32,23 @@ import type { AuthUser } from '../auth/types';
 export class HotelsController {
   constructor(private readonly hotels: HotelsService) {}
 
-  // Public listing for the marketing/search page.
+  // Public catalogue: ACTIVE by default; `includeInactive=true` only widens for staff JWT.
   @Get()
-  list(@Query(new ZodValidationPipe(ListHotelsDto)) query: InstanceType<typeof ListHotelsDto>) {
-    return this.hotels.list(query);
+  @UseGuards(OptionalJwtAuthGuard)
+  list(
+    @Query(new ZodValidationPipe(ListHotelsDto)) query: InstanceType<typeof ListHotelsDto>,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    return this.hotels.list(query, req.user);
   }
 
   @Get(':id')
-  findOne(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.hotels.findOne(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  findOne(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    return this.hotels.findOne(id, req.user);
   }
 
   @Post()

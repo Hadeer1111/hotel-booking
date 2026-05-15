@@ -78,7 +78,7 @@ export default function HotelDetailPage() {
   const availabilityQuery = useQuery({
     queryKey: queryKeys.hotels.availability(hotelId, availabilityRange),
     queryFn: () => hotelsApi.availability(hotelId, availabilityRange),
-    enabled: Boolean(hotelId) && validRange,
+    enabled: Boolean(hotelId) && validRange && Boolean(hotelQuery.data),
   });
 
   const book = useMutation({
@@ -115,7 +115,29 @@ export default function HotelDetailPage() {
       </div>
     );
   }
-  if (!hotelQuery.data) return null;
+  if (hotelQuery.isError || !hotelQuery.data) {
+    const staff = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+    return (
+      <div className="container mx-auto max-w-lg space-y-4 p-4 md:p-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/hotels')}
+          className="gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to hotels
+        </Button>
+        <div className="rounded-2xl border border-dashed border-border/70 bg-muted/25 px-6 py-12 text-center">
+          <p className="font-semibold tracking-tight">This listing is unavailable</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {staff
+              ? 'If this hotel is inactive, open it from your staff dashboard to preview or publish it again.'
+              : 'It may be inactive or no longer visible on our catalogue.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
   const hotel = hotelQuery.data;
   // Compute nights from the DateRange itself, not from the ISO strings — when
   // the user clicks a new "from" in the popover, react-day-picker briefly

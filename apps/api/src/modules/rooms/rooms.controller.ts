@@ -8,8 +8,10 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { Role } from '@prisma/client';
 import { RoomsService } from './rooms.service';
 import { ZodValidationPipe } from '../../common/zod/zod-validation.pipe';
@@ -23,6 +25,7 @@ import {
   UpdateRoomDto,
 } from './dto/room.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -35,8 +38,12 @@ export class RoomsController {
   // ---- Room types ----------------------------------------------------------
 
   @Get('room-types')
-  listTypes(@Param('hotelId', new ParseUUIDPipe()) hotelId: string) {
-    return this.rooms.listTypes(hotelId);
+  @UseGuards(OptionalJwtAuthGuard)
+  listTypes(
+    @Param('hotelId', new ParseUUIDPipe()) hotelId: string,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    return this.rooms.listTypes(hotelId, req.user);
   }
 
   @Post('room-types')
@@ -66,8 +73,12 @@ export class RoomsController {
   // ---- Physical rooms -------------------------------------------------------
 
   @Get('rooms')
-  listRooms(@Param('hotelId', new ParseUUIDPipe()) hotelId: string) {
-    return this.rooms.listRooms(hotelId);
+  @UseGuards(OptionalJwtAuthGuard)
+  listRooms(
+    @Param('hotelId', new ParseUUIDPipe()) hotelId: string,
+    @Req() req: Request & { user?: AuthUser },
+  ) {
+    return this.rooms.listRooms(hotelId, req.user);
   }
 
   @Post('rooms')
@@ -97,11 +108,13 @@ export class RoomsController {
   // ---- Availability --------------------------------------------------------
 
   @Get('availability')
+  @UseGuards(OptionalJwtAuthGuard)
   availability(
     @Param('hotelId', new ParseUUIDPipe()) hotelId: string,
     @Query(new ZodValidationPipe(AvailabilityQueryDto))
     query: InstanceType<typeof AvailabilityQueryDto>,
+    @Req() req: Request & { user?: AuthUser },
   ) {
-    return this.rooms.availability(hotelId, query.checkIn, query.checkOut);
+    return this.rooms.availability(hotelId, query.checkIn, query.checkOut, req.user);
   }
 }

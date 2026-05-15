@@ -9,6 +9,8 @@ export const queryKeys = {
   },
   hotels: {
     all: () => ['hotels'] as const,
+    /** Aggregate of all catalogue rows for ADMIN/MANAGER tools (bounded page fetches server-side max 100). */
+    manageCatalog: () => ['hotels', 'manage-catalog'] as const,
     list: (params: Record<string, unknown>) => ['hotels', 'list', params] as const,
     detail: (id: string) => ['hotels', 'detail', id] as const,
     roomTypes: (hotelId: string) => ['hotels', hotelId, 'room-types'] as const,

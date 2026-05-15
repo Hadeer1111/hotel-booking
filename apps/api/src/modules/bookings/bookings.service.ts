@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Role, type Booking, type Payment } from '@prisma/client';
+import { Prisma, Role, HotelStatus, type Booking, type Payment } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
 import { toPaginated, toSkipTake, type Paginated } from '../../common/pagination/pagination';
@@ -88,6 +88,15 @@ export class BookingsService {
   ): Promise<CreatedBookingResult> {
     return this.prisma.$transaction(
       async (tx) => {
+        const hotelOk = await tx.hotel.findUnique({
+          where: { id: dto.hotelId },
+          select: { id: true, status: true },
+        });
+        if (!hotelOk) throw new NotFoundException('hotel not found');
+        if (hotelOk.status !== HotelStatus.ACTIVE) {
+          throw new BadRequestException('hotel is inactive and cannot accept new bookings');
+        }
+
         const rt = await tx.roomType.findFirst({
           where: { id: dto.roomTypeId, hotelId: dto.hotelId },
           select: { id: true, capacity: true, basePricePerNight: true },

@@ -11,7 +11,12 @@ export const createHotelSchema = z.object({
   managerId: z.string().uuid().optional(),
 });
 
-export const updateHotelSchema = createHotelSchema.partial();
+export const updateHotelSchema = createHotelSchema
+  .partial()
+  .extend({
+    /** `null` explicitly clears the assigning manager so the hotel becomes unstaffed again. */
+    managerId: z.union([z.string().uuid(), z.null()]).optional(),
+  });
 
 export const listHotelsSchema = paginationSchema.extend({
   q: z.string().trim().min(1).max(120).optional(),
@@ -30,6 +35,11 @@ export const listHotelsSchema = paginationSchema.extend({
         .filter((n) => Number.isInteger(n) && n >= 1 && n <= 5);
       return ints.length ? Array.from(new Set(ints)).sort((a, b) => a - b) : undefined;
     }),
+  /**
+   * When true, staff (ADMIN/MANAGER) lists ACTIVE and INACTIVE rows. Ignored for
+   * other callers — they always see ACTIVE-only unless `status` narrows further.
+   */
+  includeInactive: z.coerce.boolean().optional().default(false),
 });
 
 export class CreateHotelDto extends createZodDto(createHotelSchema) {}

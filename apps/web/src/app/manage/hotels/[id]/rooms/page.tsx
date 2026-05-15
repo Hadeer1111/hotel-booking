@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Room, RoomType } from '@hotel-booking/types';
+import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api/client';
 import { hotelsApi } from '@/lib/api/hotels';
 import { queryKeys } from '@/lib/api/query-keys';
 import { RouteGuard } from '@/components/auth/route-guard';
+import { StaffPageHero } from '@/components/staff-page-hero';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +25,8 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/providers/auth-provider';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/format';
 
 export default function ManageRoomsPage() {
@@ -37,11 +42,29 @@ function Inner() {
   const hotelId = params.id;
   const qc = useQueryClient();
   const { toast } = useToast();
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === 'ADMIN';
+  const staffRole = isAdmin ? 'ADMIN' : 'MANAGER';
 
   const hotelQuery = useQuery({
     queryKey: queryKeys.hotels.detail(hotelId),
     queryFn: () => hotelsApi.detail(hotelId),
   });
+
+  useEffect(() => {
+    const h = hotelQuery.data;
+    if (!user || !h || hotelQuery.isPending) return;
+    if (user.role === 'MANAGER' && h.managerId !== user.id) {
+      toast({
+        title: 'Not authorized',
+        description: 'Managers can only configure rooms at hotels assigned to them.',
+        variant: 'destructive',
+      });
+      router.replace('/manage/hotels');
+    }
+  }, [hotelQuery.data, hotelQuery.isPending, router, toast, user]);
   const typesQuery = useQuery({
     queryKey: queryKeys.hotels.roomTypes(hotelId),
     queryFn: () => hotelsApi.roomTypes(hotelId),
@@ -119,19 +142,32 @@ function Inner() {
   });
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <header className="space-y-1">
-        <p className="text-sm text-muted-foreground">Manage</p>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {hotelQuery.data?.name ?? 'Hotel'}
-        </h1>
-        <p className="text-muted-foreground">
-          Add room types (categories) and physical rooms.
-        </p>
-      </header>
+    <div className="container mx-auto space-y-6 p-4 md:p-6">
+      <Button variant="ghost" size="sm" asChild className="-ml-2 gap-2">
+        <Link href="/manage/hotels">
+          <ArrowLeft className="h-4 w-4" />
+          {isAdmin ? 'Hotel directory' : 'My properties'}
+        </Link>
+      </Button>
+
+      <StaffPageHero
+        staffRole={staffRole}
+        title={hotelQuery.data?.name ?? 'Room inventory'}
+        subtitle={
+          isAdmin
+            ? 'Catalogue tiers and physical inventory for platform-wide storefront accuracy.'
+            : 'Keep nightly capacity aligned with guest-facing descriptions for venues you oversee.'
+        }
+      />
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card
+          className={cn(
+            isAdmin
+              ? 'border-amber-200/50 shadow-soft dark:border-amber-900/30'
+              : 'border-teal-200/60 shadow-soft dark:border-teal-900/35',
+          )}
+        >
           <CardHeader>
             <CardTitle>Add room type</CardTitle>
           </CardHeader>
@@ -143,7 +179,13 @@ function Inner() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className={cn(
+            isAdmin
+              ? 'border-amber-200/50 shadow-soft dark:border-amber-900/30'
+              : 'border-teal-200/60 shadow-soft dark:border-teal-900/35',
+          )}
+        >
           <CardHeader>
             <CardTitle>Add room</CardTitle>
           </CardHeader>
@@ -157,7 +199,13 @@ function Inner() {
         </Card>
       </section>
 
-      <Card>
+      <Card
+        className={cn(
+          isAdmin
+            ? 'border-amber-200/50 shadow-soft dark:border-amber-900/30'
+            : 'border-teal-200/60 shadow-soft dark:border-teal-900/35',
+        )}
+      >
         <CardHeader>
           <CardTitle>Room types</CardTitle>
         </CardHeader>
@@ -187,7 +235,13 @@ function Inner() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card
+        className={cn(
+          isAdmin
+            ? 'border-amber-200/50 shadow-soft dark:border-amber-900/30'
+            : 'border-teal-200/60 shadow-soft dark:border-teal-900/35',
+        )}
+      >
         <CardHeader>
           <CardTitle>Rooms</CardTitle>
         </CardHeader>

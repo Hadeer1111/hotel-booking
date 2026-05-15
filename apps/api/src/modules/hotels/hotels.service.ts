@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { Hotel, Prisma } from '@prisma/client';
-import { Role } from '@prisma/client';
+import { HotelStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { toPaginated, toSkipTake, type Paginated } from '../../common/pagination/pagination';
 import type { AuthUser } from '../auth/types';
@@ -18,13 +18,25 @@ import type {
 export class HotelsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Guest catalogue defaults to ACTIVE; staff may widen via `query.includeInactive`. */
   async list(
     query: InstanceType<typeof ListHotelsDto>,
+    viewer?: AuthUser,
   ): Promise<Paginated<Hotel & { minNightlyPrice: number | null }>> {
     const where: Prisma.HotelWhereInput = {};
     if (query.q) where.name = { contains: query.q, mode: 'insensitive' };
     if (query.city) where.city = { equals: query.city, mode: 'insensitive' };
-    if (query.status) where.status = query.status;
+
+    const staff =
+      viewer && (viewer.role === Role.ADMIN || viewer.role === Role.MANAGER);
+    if (query.status) {
+      where.status = query.status;
+    } else if (query.includeInactive && staff) {
+      // All lifecycle states for `/manage/hotels` catalogue.
+    } else {
+      where.status = HotelStatus.ACTIVE;
+    }
+
     if (query.stars && query.stars.length > 0) where.stars = { in: query.stars };
 
     const { skip, take } = toSkipTake(query);
@@ -63,10 +75,37 @@ export class HotelsService {
     return toPaginated(enriched, total, query);
   }
 
-  async findOne(id: string): Promise<Hotel> {
+  /** INACTIVE venues are omitted for guests/customers unless viewer is ADMIN/MANAGER. */
+  async findOne(id: string, viewer?: AuthUser): Promise<Hotel> {
     const hotel = await this.prisma.hotel.findUnique({ where: { id } });
     if (!hotel) throw new NotFoundException(`hotel ${id} not found`);
+    HotelsService.throwIfHotelHiddenFromAudience(hotel, viewer);
     return hotel;
+  }
+
+  /**
+   * Shared guard for nested hotel reads (availability, inventory) so inactive
+   * listings cannot be scraped anonymously.
+   */
+  async assertHotelVisibleToAudience(hotelId: string, viewer?: AuthUser): Promise<void> {
+    const hotel = await this.prisma.hotel.findUnique({
+      where: { id: hotelId },
+      select: { id: true, status: true },
+    });
+    if (!hotel) throw new NotFoundException(`hotel ${hotelId} not found`);
+    HotelsService.throwIfHotelHiddenFromAudience(hotel, viewer);
+  }
+
+  private static throwIfHotelHiddenFromAudience(
+    hotel: { id: string; status: HotelStatus },
+    viewer?: AuthUser,
+  ): void {
+    if (hotel.status === HotelStatus.ACTIVE) return;
+    const staff =
+      viewer && (viewer.role === Role.ADMIN || viewer.role === Role.MANAGER);
+    if (!staff) {
+      throw new NotFoundException(`hotel ${hotel.id} not found`);
+    }
   }
 
   create(dto: InstanceType<typeof CreateHotelDto>): Promise<Hotel> {
@@ -85,7 +124,14 @@ export class HotelsService {
   async remove(id: string): Promise<void> {
     const exists = await this.prisma.hotel.findUnique({ where: { id }, select: { id: true } });
     if (!exists) throw new NotFoundException(`hotel ${id} not found`);
-    await this.prisma.hotel.delete({ where: { id } });
+    // `Booking` references `Room` with onDelete: Restrict — remove dependent rows first
+    // so deleting a hotel with history does not fail the FK constraint.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.booking.deleteMany({
+        where: { room: { roomType: { hotelId: id } } },
+      });
+      await tx.hotel.delete({ where: { id } });
+    });
   }
 
   /**

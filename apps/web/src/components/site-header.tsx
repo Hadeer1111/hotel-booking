@@ -19,18 +19,35 @@ import { useAuth } from '@/providers/auth-provider';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS_PUBLIC = [{ href: '/hotels', label: 'Hotels' }] as const;
-const NAV_ITEMS_AUTHED = [
-  { href: '/hotels', label: 'Hotels' },
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/bookings', label: 'Bookings' },
-] as const;
+
+type AuthedNavItem = {
+  href: string;
+  label: string;
+  /** Tint active link + underline for staff-only entries. */
+  activeVariant?: 'default' | 'admin' | 'manager';
+};
+
+function authedNavItems(role: string | undefined): readonly AuthedNavItem[] {
+  const base: AuthedNavItem[] = [
+    { href: '/hotels', label: 'Hotels' },
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/bookings', label: 'Bookings' },
+  ];
+  if (role === 'ADMIN') {
+    return [...base, { href: '/manage/hotels', label: 'Hotel admin', activeVariant: 'admin' }];
+  }
+  if (role === 'MANAGER') {
+    return [...base, { href: '/manage/hotels', label: 'My properties', activeVariant: 'manager' }];
+  }
+  return base;
+}
 
 export function SiteHeader() {
   const { user, status, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const items = user ? NAV_ITEMS_AUTHED : NAV_ITEMS_PUBLIC;
+  const items = user ? authedNavItems(user.role) : NAV_ITEMS_PUBLIC;
 
   return (
     <header
@@ -44,23 +61,40 @@ export function SiteHeader() {
         <BrandLogo />
         <nav className="flex items-center gap-1 text-sm">
           {items.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const v = 'activeVariant' in item ? item.activeVariant : undefined;
+            const active =
+              pathname === item.href ||
+              (item.href.startsWith('/manage') ? pathname.startsWith('/manage') : pathname.startsWith(`${item.href}/`));
+            const activeText =
+              active && v === 'admin'
+                ? 'text-amber-900 dark:text-amber-100'
+                : active && v === 'manager'
+                  ? 'text-teal-900 dark:text-teal-100'
+                  : active
+                    ? 'text-brand-turquoiseDeep'
+                    : undefined;
+            const underline =
+              active && v === 'admin'
+                ? 'bg-amber-500 dark:bg-amber-400'
+                : active && v === 'manager'
+                  ? 'bg-teal-500 dark:bg-teal-400'
+                  : 'bg-brand-turquoise';
             return (
               <Link
-                key={item.href}
+                key={`${item.href}-${item.label}`}
                 href={item.href}
                 className={cn(
                   'relative rounded-full px-3 py-1.5 font-medium transition-colors',
-                  active
-                    ? 'text-brand-turquoiseDeep'
-                    : 'text-muted-foreground hover:text-foreground',
+                  activeText ??
+                    (active ? 'text-brand-turquoiseDeep' : 'text-muted-foreground hover:text-foreground'),
                 )}
               >
                 {item.label}
                 <span
                   aria-hidden="true"
                   className={cn(
-                    'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brand-turquoise',
+                    'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full',
+                    underline,
                     'origin-center scale-x-0 transition-transform duration-300',
                     active ? 'scale-x-100' : 'group-hover:scale-x-100',
                   )}
@@ -83,7 +117,7 @@ export function SiteHeader() {
                     'transition-all duration-200',
                   )}
                 >
-                  <UserAvatar name={user.name} />
+                  <UserAvatar name={user.name} role={user.role} />
                   <span className="max-w-[10ch] truncate">{user.name}</span>
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
@@ -138,17 +172,23 @@ export function SiteHeader() {
   );
 }
 
-function UserAvatar({ name }: { name: string }) {
+function UserAvatar({ name, role }: { name: string; role?: string }) {
   const initials = name
     .split(/\s+/)
     .map((p) => p[0]?.toUpperCase() ?? '')
     .slice(0, 2)
     .join('');
+  const gradient =
+    role === 'ADMIN'
+      ? 'from-amber-300 via-orange-200 to-rose-100'
+      : role === 'MANAGER'
+        ? 'from-teal-300 via-cyan-200 to-emerald-100'
+        : 'from-cyan-300 to-amber-200';
   return (
     <span
       className={cn(
         'inline-flex h-6 w-6 items-center justify-center rounded-full',
-        'bg-gradient-to-br from-cyan-300 to-amber-200 text-[10px] font-semibold text-slate-900',
+        `bg-gradient-to-br ${gradient} text-[10px] font-semibold text-slate-900`,
       )}
     >
       {initials || '?'}

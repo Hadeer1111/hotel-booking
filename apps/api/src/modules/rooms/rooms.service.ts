@@ -23,7 +23,8 @@ export class RoomsService {
 
   // ---- RoomType CRUD ----------------------------------------------------------------------
 
-  listTypes(hotelId: string): Promise<RoomType[]> {
+  async listTypes(hotelId: string, viewer?: AuthUser): Promise<RoomType[]> {
+    await this.hotels.assertHotelVisibleToAudience(hotelId, viewer);
     return this.prisma.roomType.findMany({
       where: { hotelId },
       orderBy: { basePricePerNight: 'asc' },
@@ -56,7 +57,8 @@ export class RoomsService {
 
   // ---- Room CRUD --------------------------------------------------------------------------
 
-  async listRooms(hotelId: string): Promise<Room[]> {
+  async listRooms(hotelId: string, viewer?: AuthUser): Promise<Room[]> {
+    await this.hotels.assertHotelVisibleToAudience(hotelId, viewer);
     return this.prisma.room.findMany({
       where: { roomType: { hotelId } },
       orderBy: [{ roomType: { basePricePerNight: 'asc' } }, { roomNumber: 'asc' }],
@@ -105,7 +107,9 @@ export class RoomsService {
     hotelId: string,
     checkIn: Date,
     checkOut: Date,
+    viewer?: AuthUser,
   ): Promise<RoomTypeAvailability[]> {
+    await this.hotels.assertHotelVisibleToAudience(hotelId, viewer);
     const types = await this.prisma.roomType.findMany({
       where: { hotelId },
       include: { _count: { select: { rooms: true } } },
