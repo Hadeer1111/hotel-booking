@@ -1,8 +1,8 @@
 /**
- * In-memory token store. Access tokens live in JS memory only (no localStorage)
- * to keep XSS blast-radius small; refresh tokens are persisted to a SameSite
- * cookie set by the API on rotation. This client-side store is hydrated from
- * /v1/auth/me on app boot.
+ * In-memory token store. Access tokens live in JS memory only; the refresh token
+ * is persisted in localStorage as `hb.refreshToken` (see AuthProvider). Clearing
+ * “site data” in the browser often wipes that key along with cookies — it does
+ * not mean the API uses auth cookies.
  *
  * For the take-home / mini-system we keep it simple: refresh token also lives
  * here since the API echoes it in the JSON response. In a fully cookie-based

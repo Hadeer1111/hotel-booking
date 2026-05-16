@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BedDouble, CalendarDays, CreditCard, Users as UsersIcon } from 'lucide-react';
@@ -38,6 +38,15 @@ function Inner() {
   const bookingId = params.id;
   const justReturned = sp.has('payment_intent');
 
+  // Stripe `return_url` is a full navigation: in-memory access tokens are gone until
+  // /auth/refresh runs. Invalidate so we don’t show a stale booking while the webhook
+  // applies, and drop PI query params once payment is confirmed (avoids odd reload state).
+  useEffect(() => {
+    if (!justReturned || !bookingId) return;
+    void qc.invalidateQueries({ queryKey: queryKeys.bookings.detail(bookingId) });
+    void qc.invalidateQueries({ queryKey: queryKeys.bookings.all() });
+  }, [bookingId, justReturned, qc]);
+
   const query = useQuery({
     queryKey: queryKeys.bookings.detail(bookingId),
     queryFn: () => api.get<BookingWithPayment>(`/bookings/${bookingId}`),
@@ -50,6 +59,15 @@ function Inner() {
       return false;
     },
   });
+
+  useEffect(() => {
+    const b = query.data;
+    if (!b || !justReturned) return;
+    const paid = b.payment?.status === 'SUCCEEDED' || b.status === 'CONFIRMED';
+    if (paid) {
+      router.replace(`/bookings/${bookingId}`, { scroll: false });
+    }
+  }, [query.data, bookingId, justReturned, router]);
 
   const cancel = useMutation({
     mutationFn: () =>

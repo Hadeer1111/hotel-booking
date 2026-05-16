@@ -27,6 +27,15 @@ export function StripeCheckout({
   clientSecret: string;
   returnUrl: string;
 }) {
+  if (!env.stripePublishableKey) {
+    return (
+      <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive ring-1 ring-destructive/20">
+        Stripe is enabled (<code className="font-mono text-xs">NEXT_PUBLIC_PAYMENTS_PROVIDER=stripe</code>)
+        but <code className="font-mono text-xs">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> is missing. Add it to{' '}
+        <code className="font-mono text-xs">apps/web/.env.local</code> and restart <code className="font-mono text-xs">next dev</code>.
+      </p>
+    );
+  }
   return (
     <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
       <Form returnUrl={returnUrl} />

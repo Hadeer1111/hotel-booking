@@ -222,6 +222,15 @@ pnpm --filter @hotel-booking/api dev       # http://localhost:4000 (Swagger: /do
 pnpm --filter @hotel-booking/web dev       # http://localhost:3000
 ```
 
+### Stripe (optional local testing)
+
+The API already implements Stripe (`PAYMENTS_PROVIDER=stripe`) and web checkout (`NEXT_PUBLIC_PAYMENTS_PROVIDER=stripe`). Nothing extra to code — only env + webhook forwarding:
+
+1. In **`apps/api/.env`**: `PAYMENTS_PROVIDER=stripe`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CURRENCY`.
+2. In **`apps/web/.env.local`**: `NEXT_PUBLIC_PAYMENTS_PROVIDER=stripe`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (same Stripe mode as the secret key).
+3. From Stripe Dashboard use **test** keys. Because Stripe cannot reach `localhost`, run **`stripe listen --forward-to localhost:4000/v1/payments/webhook`** and put CLI’s **`whsec_…`** into **`STRIPE_WEBHOOK_SECRET`** (replace when you rotate CLI).
+4. Complete a booking from the UI; after paying with a [test card](https://stripe.com/docs/testing), the webhook should mark the payment succeeded.
+
 ### Seed dataset
 
 The seed script is **idempotent** and produces:
